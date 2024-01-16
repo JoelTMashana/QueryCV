@@ -58,7 +58,9 @@ def query_gpt(formatted_experiences, user_query):
     """
     Sends a query to the OpenAI GPT API using the updated interface and returns the response.
     """
-    prompt = f"User Work Experience:\n{formatted_experiences}\nUser Query: {user_query}\n"
+    prompt = f"""User Work Experience: {formatted_experiences}
+                 User Query: {user_query}
+             """
 
     try:
         response = openai.chat.completions.create(
