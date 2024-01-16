@@ -3,42 +3,52 @@ import openai
 import os
 from dotenv import load_dotenv
 from fastapi import HTTPException
-from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink, User
+from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink
 from schemas import SkillRead, ToolRead
 from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy.exc import SQLAlchemyError
 
-
-
-
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 def format_experiences_for_gpt(experiences) -> str:
-    """ 
-    This function formats the experience data into a
-    text block, readable by GPT.
-    """
     if not experiences:
         return "This user has no experience listed. Encourage them to update their information."
     counter = 0
-    formatted_text = ""
-    try:
-        for exp in experiences:
+
+    try:      
+        formatted_text = ""
+        for experience in experiences:
             counter += 1
-            formatted_text += f"""
-            Experience {counter}
-            Position: {exp.position}
-            Company: {exp.company}
-            Industry: {exp.industry}
-            Duration: {exp.duration}
-            Skills Used: {exp.skills}
-            Experience: {exp.experience}
-            Tools & Technologies: {exp.tools}
-            Outcomes: {exp.outcomes}
-            ----\n"""
-        return formatted_text
+            # Construct  names as a comma-separated string
+            skill_names = ''
+            for skill in experience.skills:
+                if skill_names:
+                    skill_names += ', '
+                skill_names += skill.skill_name
+            
+            tool_names = ''
+            for tool in experience.tools:
+                if tool_names:
+                    tool_names += ', '
+                tool_names += tool.tool_name
+
+            formatted_experience = f"""
+                Experience: {counter} 
+                Position: {experience.position},
+                Company: {experience.company},
+                Industry: {experience.industry}, 
+                Duration: {experience.duration},
+                Description: {experience.description},
+                Outcomes: {experience.outcomes},
+                Skills: {skill_names},
+                Tools: {tool_names}
+                ----\n"""
+          
+            formatted_text += formatted_experience
+        print(formatted_text.strip())
+        return formatted_text.strip()
     except Exception as e:
         print(f"An error occurred: {e}")
         return "Apologise to the user, an error has occured"
@@ -48,7 +58,9 @@ def query_gpt(formatted_experiences, user_query):
     """
     Sends a query to the OpenAI GPT API using the updated interface and returns the response.
     """
-    prompt = f"User Work Experience:\n{formatted_experiences}\nUser Query: {user_query}\n"
+    prompt = f"""User Work Experience: {formatted_experiences}
+                 User Query: {user_query}
+             """
 
     try:
         response = openai.chat.completions.create(
@@ -76,8 +88,8 @@ def get_skills_related_to_experience(experience_id: int, db: Session) -> List[Sk
             skill_model = SkillRead(skill_id=skill.skill_id, skill_name=skill.skill_name)
             skill_models.append(skill_model)
         return skill_models
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error while retrieving skills: {e}")
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="Database error while retrieving skills")
 
 
 def get_tools_related_to_experience(experience_id: int, db: Session) -> List[ToolRead]:
@@ -88,6 +100,7 @@ def get_tools_related_to_experience(experience_id: int, db: Session) -> List[Too
             tool_model = ToolRead(tool_id=tool.tool_id, tool_name=tool.tool_name)
             tool_models.append(tool_model)
         return tool_models
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error while retrieving tools: {e}")
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="Database error while retrieving tools")
+
 
