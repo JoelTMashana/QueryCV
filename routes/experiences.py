@@ -1,44 +1,27 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Experience
-from schemas import ExperienceCreate
-from services import format_experiences_for_gpt, query_gpt
+from models import Experience, Skill, Tool, ExperienceSkillLink, ExperienceToolLink, User
+from schemas import UserRead
+from typing import List, Dict
 
 router = APIRouter()
 
-@router.post("/experiences/")
-def create_experience(experience: ExperienceCreate, db: Session = Depends(get_db)):
-    """
-    This function posts a new experience to the database.
-    """
-    db_experience = Experience(
-        position=experience.position,
-        company=experience.company,
-        industry=experience.industry,
-        duration=experience.duration,
-        skills=experience.skills,
-        tools=experience.tools,
-        outcomes=experience.outcomes
-    )
-    db.add(db_experience)
-    db.commit()
-    db.refresh(db_experience)
-    return db_experience
+@router.get("/users/{user_id}/experiences")
+def get_user_experiences(user_id: int, db: Session = Depends(get_db)):
+    experiences = db.query(Experience).filter(Experience.user_id == user_id).all() # Get all experiences for user
+    experience_details = []
 
-@router.get("/experiences/")
-def format_and_query_experiences(user_query: str = Query(None), company: str = None, db: Session = Depends(get_db)):
-    """
-    This function reads and indiviual company or all companies.
-    """
-    if company:
-        experiences = db.query(Experience).filter(Experience.company == company).all()
-    else:
-        experiences = db.query(Experience).all()
-    
-    if experiences:
-       formatted_experiences = format_experiences_for_gpt(experiences)
-       gpt_response = query_gpt(formatted_experiences, user_query)
-       return {"gpt_response": gpt_response}    
-    else:
-        raise HTTPException(status_code=404, detail="No experiences found")
+    # Loops through the experiences, associates with skills and tools used then returns the result
+    for experience in experiences:
+        skills = db.query(Skill).join(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience.experience_id).all()
+        tools = db.query(Tool).join(ExperienceToolLink).filter(ExperienceToolLink.experience_id == experience.experience_id).all()
+        experience_details.append({
+            "experience": experience,
+            "skills": skills,
+            "tools": tools
+        })
+
+    return experience_details
+
+
