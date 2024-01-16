@@ -49,6 +49,7 @@ class ExperienceBase(BaseModel):
     industry: str
     duration: str
     description: str
+    outcomes: str
 
 class ExperienceCreate(ExperienceBase):
     pass

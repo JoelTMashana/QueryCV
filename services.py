@@ -16,29 +16,42 @@ load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 def format_experiences_for_gpt(experiences) -> str:
-    """ 
-    This function formats the experience data into a
-    text block, readable by GPT.
-    """
     if not experiences:
         return "This user has no experience listed. Encourage them to update their information."
     counter = 0
-    formatted_text = ""
-    try:
+
+    try:      
+        formatted_text = ""
         for exp in experiences:
             counter += 1
-            formatted_text += f"""
-            Experience {counter}
-            Position: {exp.position}
-            Company: {exp.company}
-            Industry: {exp.industry}
-            Duration: {exp.duration}
-            Skills Used: {exp.skills}
-            Experience: {exp.experience}
-            Tools & Technologies: {exp.tools}
-            Outcomes: {exp.outcomes}
-            ----\n"""
-        return formatted_text
+            # Construct  names as a comma-separated string
+            skill_names = ''
+            for skill in exp.skills:
+                if skill_names:
+                    skill_names += ', '
+                skill_names += skill.skill_name
+            
+            tool_names = ''
+            for tool in exp.tools:
+                if tool_names:
+                    tool_names += ', '
+                tool_names += tool.tool_name
+
+            formatted_exp = f"""
+                Experience: {counter} 
+                Position: {exp.position},
+                Company: {exp.company},
+                Industry: {exp.industry}, 
+                Duration: {exp.duration},
+                Description: {exp.description},
+                Outcomes: {exp.outcomes},
+                Skills: {skill_names},
+                Tools: {tool_names}
+                ----\n"""
+          
+            formatted_text += formatted_exp
+        print(formatted_text.strip())
+        return formatted_text.strip()
     except Exception as e:
         print(f"An error occurred: {e}")
         return "Apologise to the user, an error has occured"
@@ -90,4 +103,5 @@ def get_tools_related_to_experience(experience_id: int, db: Session) -> List[Too
         return tool_models
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error while retrieving tools: {e}")
+
 

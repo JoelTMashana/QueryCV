@@ -33,6 +33,8 @@ def get_user_experiences(user_id: int, db: Session = Depends(get_db)):
             tools=tool_models
         )
         work_experience_full_details.append(experience_detail)
+    format_experiences_for_gpt(work_experience_full_details)
     return work_experience_full_details
+
 
 
