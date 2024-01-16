@@ -4,8 +4,8 @@ from database import get_db
 from models import Experience
 from schemas import ExperienceRead
 from typing import List, Dict
-from helpers import check_user_exits, get_skills_related_to_experience, get_tools_related_to_experience
-
+from helpers import check_user_exits
+from services import  get_skills_related_to_experience, get_tools_related_to_experience
 router = APIRouter()
 
 @router.get("/users/{user_id}/experiences")
