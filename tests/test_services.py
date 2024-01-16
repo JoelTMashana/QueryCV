@@ -23,6 +23,16 @@ def test_get_tools_related_to_experience_with_tools(experience_with_tools, test_
     assert len(result) == 1  
     assert result[0].tool_id == 1 
     assert result[0].tool_name == "React"  
+  
+
+def test_get_skills_related_to_experience_with_multiple_skills(experience_with_multiple_skills, test_db_session):
+    
+    experience_id = experience_with_multiple_skills
+
+    result = get_skills_related_to_experience(experience_id, test_db_session)
+
+    assert len(result) == 3  
+
 
   
 
