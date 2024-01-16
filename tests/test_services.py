@@ -1,4 +1,4 @@
-from services import get_skills_related_to_experience
+from services import get_skills_related_to_experience, get_tools_related_to_experience
 
 
 
@@ -13,3 +13,16 @@ def test_get_skills_related_to_experience_with_skills(experience_with_skills, te
     assert result[0].skill_name == "Communication"  
 
   
+  
+def test_get_tools_related_to_experience_with_tools(experience_with_tools, test_db_session):
+    
+    experience_id = experience_with_tools
+
+    result = get_tools_related_to_experience(experience_id, test_db_session)
+
+    assert len(result) == 1  
+    assert result[0].tool_id == 1 
+    assert result[0].tool_name == "React"  
+
+  
+
