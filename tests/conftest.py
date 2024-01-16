@@ -130,3 +130,44 @@ def experience_with_multiple_skills(test_db_session):
     test_db_session.commit()
 
     return experience.experience_id
+
+
+
+@pytest.fixture(scope="function")
+def experience_with_multiple_tools(test_db_session):
+    user = User(
+        firstname="Jack", 
+        lastname="Dimon", 
+        email="jack@example.com", 
+        hashed_password="hashed_pwd"
+    )
+    test_db_session.add(user)
+    test_db_session.commit()
+
+    experience = Experience(
+        position="Software Engineer",
+        company="SoftTech",
+        industry="Information Technology",
+        duration="01/01/2020 - 01/01/2024",
+        description="Developing and maintaining mobile applications.",
+        outcomes="Improved system performance by 50%",
+        user_id=user.user_id 
+    )  
+    test_db_session.add(experience)
+    test_db_session.commit()
+
+    tools = [
+        Tool(tool_name="React"),
+        Tool(tool_name="PHP"),
+        Tool(tool_name="AWS")
+    ]
+
+    test_db_session.add_all(tools)
+    test_db_session.commit()
+
+    for tool in tools:
+        link = ExperienceToolLink(experience_id=experience.experience_id, tool_id=tool.tool_id)
+        test_db_session.add(link)
+    test_db_session.commit()
+
+    return experience.experience_id

@@ -33,6 +33,14 @@ def test_get_skills_related_to_experience_with_multiple_skills(experience_with_m
 
     assert len(result) == 3  
 
+def test_get_tools_related_to_experience_with_multiple_tools(experience_with_multiple_tools, test_db_session):
+    
+    experience_id = experience_with_multiple_tools
+
+    result = get_tools_related_to_experience(experience_id, test_db_session)
+
+    assert len(result) == 3  
+
 
   
 
