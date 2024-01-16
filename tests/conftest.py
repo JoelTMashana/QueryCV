@@ -196,10 +196,4 @@ def experience_with_zero_skills(test_db_session):
     test_db_session.add(experience)
     test_db_session.commit()
 
-   
-    link = ExperienceSkillLink(experience_id=experience.experience_id)
-    test_db_session.add(link)
-    
-    test_db_session.commit()
-
     return experience.experience_id
