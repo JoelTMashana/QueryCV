@@ -79,7 +79,6 @@ def query_gpt(formatted_experiences, user_query):
 
 
 
-
 def get_skills_related_to_experience(experience_id: int, db: Session) -> List[SkillRead]:
     try:
         skills = db.query(Skill).join(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()
@@ -90,6 +89,7 @@ def get_skills_related_to_experience(experience_id: int, db: Session) -> List[Sk
         return skill_models
     except SQLAlchemyError:
         raise HTTPException(status_code=500, detail="Database error while retrieving skills")
+
 
 
 def get_tools_related_to_experience(experience_id: int, db: Session) -> List[ToolRead]:
