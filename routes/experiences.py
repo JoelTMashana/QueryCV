@@ -1,14 +1,14 @@
-from fastapi import Depends, HTTPException, APIRouter, Query
+from fastapi import Depends, APIRouter, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Experience
 from schemas import ExperienceRead
-from typing import List, Dict
 from helpers import check_user_exits
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
+
 router = APIRouter()
 
-@router.get("/users/{user_id}/experiences")
+@router.get("/api/v1/users/{user_id}/experiences")
 def get_user_experiences(user_id: int, user_query: str = Query(None), db: Session = Depends(get_db)):
 
     check_user_exits(user_id, db)

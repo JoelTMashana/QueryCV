@@ -88,8 +88,8 @@ def get_skills_related_to_experience(experience_id: int, db: Session) -> List[Sk
             skill_model = SkillRead(skill_id=skill.skill_id, skill_name=skill.skill_name)
             skill_models.append(skill_model)
         return skill_models
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error while retrieving skills: {e}")
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="Database error while retrieving skills")
 
 
 def get_tools_related_to_experience(experience_id: int, db: Session) -> List[ToolRead]:
@@ -100,7 +100,7 @@ def get_tools_related_to_experience(experience_id: int, db: Session) -> List[Too
             tool_model = ToolRead(tool_id=tool.tool_id, tool_name=tool.tool_name)
             tool_models.append(tool_model)
         return tool_models
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error while retrieving tools: {e}")
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="Database error while retrieving tools")
 
 
