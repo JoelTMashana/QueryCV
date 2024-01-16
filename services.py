@@ -3,14 +3,11 @@ import openai
 import os
 from dotenv import load_dotenv
 from fastapi import HTTPException
-from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink, User
+from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink
 from schemas import SkillRead, ToolRead
 from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy.exc import SQLAlchemyError
-
-
-
 
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -22,34 +19,34 @@ def format_experiences_for_gpt(experiences) -> str:
 
     try:      
         formatted_text = ""
-        for exp in experiences:
+        for experience in experiences:
             counter += 1
             # Construct  names as a comma-separated string
             skill_names = ''
-            for skill in exp.skills:
+            for skill in experience.skills:
                 if skill_names:
                     skill_names += ', '
                 skill_names += skill.skill_name
             
             tool_names = ''
-            for tool in exp.tools:
+            for tool in experience.tools:
                 if tool_names:
                     tool_names += ', '
                 tool_names += tool.tool_name
 
-            formatted_exp = f"""
+            formatted_experience = f"""
                 Experience: {counter} 
-                Position: {exp.position},
-                Company: {exp.company},
-                Industry: {exp.industry}, 
-                Duration: {exp.duration},
-                Description: {exp.description},
-                Outcomes: {exp.outcomes},
+                Position: {experience.position},
+                Company: {experience.company},
+                Industry: {experience.industry}, 
+                Duration: {experience.duration},
+                Description: {experience.description},
+                Outcomes: {experience.outcomes},
                 Skills: {skill_names},
                 Tools: {tool_names}
                 ----\n"""
           
-            formatted_text += formatted_exp
+            formatted_text += formatted_experience
         print(formatted_text.strip())
         return formatted_text.strip()
     except Exception as e:
