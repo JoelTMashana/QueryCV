@@ -5,16 +5,15 @@ from database import get_db
 from models import Experience, Skill, Tool, ExperienceSkillLink, ExperienceToolLink, User
 from schemas import UserRead, ExperienceRead, SkillRead, ToolRead
 from typing import List, Dict
+from helpers import check_user_exits
 
 router = APIRouter()
 
 @router.get("/users/{user_id}/experiences")
 def get_user_experiences(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.user_id == user_id).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
+    check_user_exits(user_id, db)
+    
     work_experience_full_details = []
     work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
 
