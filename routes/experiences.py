@@ -9,9 +9,10 @@ router = APIRouter()
 
 @router.get("/users/{user_id}/experiences")
 def get_user_experiences(user_id: int, db: Session = Depends(get_db)):
-    experiences = db.query(Experience).filter(Experience.user_id == user_id).all() # Get all users that match id
+    experiences = db.query(Experience).filter(Experience.user_id == user_id).all() # Get all experiences for user
     experience_details = []
 
+    # Loops through the experiences, associates with skills and tools used then returns the result
     for experience in experiences:
         skills = db.query(Skill).join(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience.experience_id).all()
         tools = db.query(Tool).join(ExperienceToolLink).filter(ExperienceToolLink.experience_id == experience.experience_id).all()
