@@ -1,39 +1,38 @@
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
-import sqlalchemy
 from database import get_db
-from models import Experience, Skill, Tool, ExperienceSkillLink, ExperienceToolLink, User
-from schemas import UserRead
+from models import Experience
+from schemas import ExperienceRead
 from typing import List, Dict
-
+from helpers import check_user_exits
+from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt
 router = APIRouter()
 
 @router.get("/users/{user_id}/experiences")
 def get_user_experiences(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.user_id == user_id).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
+    check_user_exits(user_id, db)
 
-    experiences = db.query(Experience).filter(Experience.user_id == user_id).all() # Get all experiences for user
-    experience_details = []
+    work_experience_full_details = []
+    work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
 
-    # Loops through the experiences, associates with skills and tools used then returns the result
-    try:
-        for experience in experiences:
-            skills = db.query(Skill).join(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience.experience_id).all()
-            tools = db.query(Tool).join(ExperienceToolLink).filter(ExperienceToolLink.experience_id == experience.experience_id).all()
-            experience_details.append({
-                "experience": experience,
-                "skills": skills,
-                "tools": tools
-            })
-    except sqlalchemy.exc.SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
-    
-            
+    for experience in work_experience:
+        skill_models = get_skills_related_to_experience(experience.experience_id, db)
 
-    return experience_details
+        tool_models = get_tools_related_to_experience(experience.experience_id, db)
+
+        experience_detail = ExperienceRead(
+            experience_id=experience.experience_id,
+            position=experience.position,
+            company=experience.company,
+            industry=experience.industry,
+            duration=experience.duration,
+            description=experience.description,
+            outcomes=experience.outcomes,
+            skills=skill_models,
+            tools=tool_models
+        )
+        work_experience_full_details.append(experience_detail)
+    return work_experience_full_details
 
 

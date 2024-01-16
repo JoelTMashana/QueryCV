@@ -2,10 +2,20 @@
 import openai
 import os
 from dotenv import load_dotenv
+from fastapi import HTTPException
+from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink, User
+from schemas import SkillRead, ToolRead
+from sqlalchemy.orm import Session
+from typing import List
+from sqlalchemy.exc import SQLAlchemyError
+
+
+
+
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-def format_experiences_for_gpt(experiences):
+def format_experiences_for_gpt(experiences) -> str:
     """ 
     This function formats the experience data into a
     text block, readable by GPT.
@@ -54,3 +64,30 @@ def query_gpt(formatted_experiences, user_query):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
+
+
+
+
+def get_skills_related_to_experience(experience_id: int, db: Session) -> List[SkillRead]:
+    try:
+        skills = db.query(Skill).join(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()
+        skill_models = []
+        for skill in skills:
+            skill_model = SkillRead(skill_id=skill.skill_id, skill_name=skill.skill_name)
+            skill_models.append(skill_model)
+        return skill_models
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error while retrieving skills: {e}")
+
+
+def get_tools_related_to_experience(experience_id: int, db: Session) -> List[ToolRead]:
+    try:
+        tools = db.query(Tool).join(ExperienceToolLink).filter(ExperienceToolLink.experience_id == experience_id).all()
+        tool_models = []
+        for tool in tools:
+            tool_model = ToolRead(tool_id=tool.tool_id, tool_name=tool.tool_name)
+            tool_models.append(tool_model)
+        return tool_models
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error while retrieving tools: {e}")
+
