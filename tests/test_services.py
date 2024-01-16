@@ -42,11 +42,20 @@ def test_get_tools_related_to_experience_with_multiple_tools(experience_with_mul
     assert len(result) == 3  
 
 
-def test_get_skills_related_to_experience_with_zero_skills(experience_with_zero_skills, test_db_session):
+def test_get_skills_related_to_experience_with_zero_skills(experience_with_zero_skills_and_tools, test_db_session):
     
-    experience_id = experience_with_zero_skills
+    experience_id = experience_with_zero_skills_and_tools
 
     result = get_skills_related_to_experience(experience_id, test_db_session)
+
+    assert len(result) == 0  
+
+
+def test_get_tools_related_to_experience_with_zero_tools(experience_with_zero_skills_and_tools, test_db_session):
+    
+    experience_id = experience_with_zero_skills_and_tools
+
+    result = get_tools_related_to_experience(experience_id, test_db_session)
 
     assert len(result) == 0  
 

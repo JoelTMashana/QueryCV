@@ -174,7 +174,7 @@ def experience_with_multiple_tools(test_db_session):
 
 
 @pytest.fixture(scope="function")
-def experience_with_zero_skills(test_db_session):
+def experience_with_zero_skills_and_tools(test_db_session):
     user = User(
         firstname="Jack", 
         lastname="Dimon", 
