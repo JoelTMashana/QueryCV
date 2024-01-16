@@ -8,3 +8,4 @@ python-dotenv
 requests
 uvicorn
 sqlalchemy
+email-validator
