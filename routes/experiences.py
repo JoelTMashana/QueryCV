@@ -5,7 +5,7 @@ from models import Experience
 from schemas import ExperienceRead
 from typing import List, Dict
 from helpers import check_user_exits
-from services import  get_skills_related_to_experience, get_tools_related_to_experience
+from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt
 router = APIRouter()
 
 @router.get("/users/{user_id}/experiences")
@@ -33,7 +33,6 @@ def get_user_experiences(user_id: int, db: Session = Depends(get_db)):
             tools=tool_models
         )
         work_experience_full_details.append(experience_detail)
-
     return work_experience_full_details
 
 

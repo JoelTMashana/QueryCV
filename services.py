@@ -15,7 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-def format_experiences_for_gpt(experiences):
+def format_experiences_for_gpt(experiences) -> str:
     """ 
     This function formats the experience data into a
     text block, readable by GPT.

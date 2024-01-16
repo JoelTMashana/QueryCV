@@ -1,7 +1,7 @@
 import requests
 
 def send_query_to_api(user_query, company=None):
-    url = "http://127.0.0.1:8000/experiences"
+    url = "http://127.0.0.1:8000/users/1/experiences"
     params = {"user_query": user_query}
     if company:
         params["company"] = company
