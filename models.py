@@ -29,7 +29,6 @@ class Experience(Base):
     description = Column(String)
     outcomes = Column(String)
     user_id = Column(Integer, ForeignKey('users.user_id'))
-    # Relationships
     owner = relationship("User", back_populates="experiences")
     experience_skills = relationship('ExperienceSkillLink', back_populates='experience')
     experience_tools = relationship('ExperienceToolLink', back_populates='experience')
@@ -39,7 +38,6 @@ class Skill(Base):
     __tablename__ = 'skills'
     skill_id = Column(Integer, primary_key=True, index=True)
     skill_name = Column(String(35), index=True)
-    # Relationships
     user_skills = relationship('UserSkillLink', back_populates='skill')
     experience_skills = relationship('ExperienceSkillLink', back_populates='skill')
 
@@ -48,7 +46,6 @@ class Tool(Base):
     __tablename__ = 'tools'
     tool_id = Column(Integer, primary_key=True, index=True)
     tool_name = Column(String(35), index=True)
-    # Relationships
     user_tools = relationship('UserToolLink', back_populates='tool')
     experience_tools = relationship('ExperienceToolLink', back_populates='tool')
 
@@ -58,7 +55,6 @@ class UserSkillLink(Base):
     user_skill_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.user_id'), index=True)
     skill_id = Column(Integer, ForeignKey('skills.skill_id'), index=True)
-    # Relationships
     user = relationship('User', back_populates='user_skills')
     skill = relationship('Skill', back_populates='user_skills')
 
@@ -68,7 +64,6 @@ class UserToolLink(Base):
     user_tool_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.user_id'), index=True)
     tool_id = Column(Integer, ForeignKey('tools.tool_id'), index=True)
-    # Relationships
     user = relationship('User', back_populates='user_tools')
     tool = relationship('Tool', back_populates='user_tools')
 
