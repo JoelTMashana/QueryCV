@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models import Experience, Skill, Tool, User, UserSkillLink, UserToolLink
+from models import Experience, Skill, Tool, User, UserSkillLink, UserToolLink, ExperienceSkillLink, ExperienceToolLink
 import logging
 
 
@@ -147,6 +147,33 @@ def initialise_db(engine):
                 )            
             ]
             db.add_all(intial_user_tools_link)
+
+        if db.query(UserToolLink).count() == 0:
+            intial_user_tools_link = [
+                UserToolLink(
+                    user_id=1,
+                    tool_id=1
+                )            
+            ]
+            db.add_all(intial_user_tools_link)
+
+        if db.query(ExperienceSkillLink).count() == 0:
+            intial_experience_skills_link = [
+                ExperienceSkillLink(
+                    experience_id=1,
+                    skill_id=1
+                )            
+            ]
+            db.add_all(intial_experience_skills_link)
+
+        if db.query(ExperienceToolLink).count() == 0:
+            intial_experience_tools_link = [
+                ExperienceToolLink(
+                    experience_id=1,
+                    tool_id=1
+                )            
+            ]
+            db.add_all(intial_experience_tools_link)
 
 
 
