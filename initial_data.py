@@ -115,6 +115,21 @@ def initialise_db(engine):
             ]
             db.add_all(initial_tools)
 
+        if db.query(Experience).count() == 0:
+            initial_experiences = [
+                Experience(
+                    position="Software Developer",
+                    company="TechCorp",
+                    industry="Information Technology",
+                    duration="01/01/2020 - 01/01/2023",
+                    description="Developing and maintaining web applications.",
+                    outcomes="Improved system performance by 20%",
+                    user_id=1  
+                ),       
+            ]
+
+            db.add_all(initial_experiences)
+
         db.commit()
         logging.info("Database initialised with predefined data.")
     except Exception as e:
