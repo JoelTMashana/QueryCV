@@ -6,6 +6,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from  schemas import UserBase, UserAuth
+from sqlalchemy.orm import Session
+from models import User
+from database import get_db
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -28,7 +31,7 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -36,9 +39,18 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
+        user_id: str = payload.get("sub")
+        if user_id is None:
             raise credentials_exception
-        return UserAuth(email=email)
+
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if user is None:
+            raise credentials_exception
+        return UserAuth(
+                user_id=user.user_id,
+                firstname=user.firstname,
+                lastname=user.lastname,
+                email=user.email
+        )
     except JWTError:
         raise credentials_exception

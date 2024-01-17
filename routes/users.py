@@ -49,11 +49,11 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_access_token(data={"sub": str(user.user_id)})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 
 @router.get("/protected-route")
-def read_protected_route(current_user: UserBase = Depends(get_current_user)):
+def read_protected_route(current_user: UserAuth = Depends(get_current_user)):
     return {"message": "Protected route accessed", "user": current_user}
