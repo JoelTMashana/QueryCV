@@ -19,6 +19,8 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserAuth(BaseModel):
+    email: EmailStr
 
 
 class SkillBase(BaseModel):

@@ -1,12 +1,11 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
-from schemas import UserRead, UserCreate, UserBase, UserLogin
+from schemas import UserRead, UserCreate, UserBase, UserLogin, UserAuth
 from passlib.context import CryptContext
-from security import verify_password, create_access_token
-
+from security import verify_password, create_access_token, get_current_user
 
 router = APIRouter()
 
@@ -45,10 +44,16 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
 
     if not user or not verify_password(user_credentials.password, user.hashed_password):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=401,
             detail="Incorrect email address or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+
+@router.get("/protected-route")
+def read_protected_route(current_user: UserBase = Depends(get_current_user)):
+    return {"message": "Protected route accessed", "user": current_user}
