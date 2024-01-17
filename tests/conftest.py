@@ -7,6 +7,7 @@ from models import Experience, Skill, ExperienceSkillLink, User, Tool, Experienc
 from security import create_access_token
 from passlib.context import CryptContext
 import os
+import logging
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
@@ -17,8 +18,13 @@ if not SECRET_KEY:
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
+logging.basicConfig(level=logging.INFO)
+
+
 @pytest.fixture(scope="function")
 def test_db_session():
+    logging.info("creating test database session")
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(bind=engine)
 
@@ -29,6 +35,7 @@ def test_db_session():
 
     db_session.close()
     Base.metadata.drop_all(bind=engine)
+    logging.info("test database session closed and tables dropped")
 
 
 
@@ -211,7 +218,8 @@ def experience_with_zero_skills_and_tools(test_db_session):
 
 @pytest.fixture(scope="function")
 def test_user(test_db_session):
-    
+    logging.info("creating the user fixure")
+
     plain_password = 'plainpassword'
     hashed_password = pwd_context.hash(plain_password)
     test_user = User(
@@ -223,6 +231,6 @@ def test_user(test_db_session):
 
     test_db_session.add(test_user)
     test_db_session.commit()
-
+    logging.info("commited user fixture to test_db_session")
     return test_user
 
