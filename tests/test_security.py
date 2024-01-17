@@ -48,3 +48,18 @@ def test_protected_get_user_experiences_route_access_with_valid_token(test_user,
     response = client.get("/api/v1/users/1/experiences", headers=headers) # Sends requests to protected route 
 
     assert response.status_code == 200
+
+
+def test_protected_get_user_experiences_route_access_with_invalid_token():
+    invalid_token = "invalid"
+
+    headers = {"Authorization": f"Bearer {invalid_token}"}
+
+    response = client.get("/api/v1/users/1/experiences", headers=headers)
+
+    assert response.status_code == 401
+
+def test_protected_get_user_experiences_route_access_without_token():
+    response = client.get("/api/v1/users/1/experiences")
+
+    assert response.status_code == 401
