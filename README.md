@@ -18,6 +18,7 @@
 - Set environment var TESTING=1
 - For Unix systems TESTING=1 pytest
 - Windows $env:TESTING = "1"  pytest
+- $env:SECRET_KEY = "<seceret-key>"
 
 
 ## Contact

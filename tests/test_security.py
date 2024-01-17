@@ -7,6 +7,7 @@ from routes.users import login
 client = TestClient(app)
 
 
+
 def test_login_successful(test_user, test_db_session):
     user_credentials = UserLogin(
         email=test_user.email,

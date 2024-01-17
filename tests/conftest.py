@@ -6,6 +6,13 @@ from initial_data import initialise_db
 from models import Experience, Skill, ExperienceSkillLink, User, Tool, ExperienceToolLink
 from security import create_access_token
 from passlib.context import CryptContext
+import os
+
+SECRET_KEY = os.environ.get("SECRET_KEY")
+
+print(SECRET_KEY)
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable not set")
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
