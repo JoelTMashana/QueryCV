@@ -1,12 +1,8 @@
-from fastapi import Depends, APIRouter, Query, HTTPException
+from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Experience, User, Tool, Skill
-from schemas import ExperienceRead, ExperienceCreate, ToolCreate, ToolRead, SkillRead, SkillCreate
-from helpers import check_user_exits
-from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
-from security import get_current_user 
-from schemas import UserAuth
+from models import  Tool, Skill
+from schemas import ToolCreate, ToolRead, SkillRead, SkillCreate
 
 router = APIRouter()
 
