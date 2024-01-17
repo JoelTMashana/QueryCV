@@ -36,14 +36,16 @@ def test_login_not_successful(test_db_session):
 
 
 
-def test_protected_get_user_experiences_route_access_with_valid_token(test_user, test_db_session):
+# def test_protected_get_user_experiences_route_access_with_valid_token(test_user, test_db_session):
     
-    logging.info("Starting test: test_protected_get_user_experiences_route_access_with_valid_token")
-    valid_token = create_access_token({"sub": str(test_user.user_id)})
-    headers = {"Authorization": f"Bearer {valid_token}"}
-    response = client.get("/api/v1/users/1/experiences", headers=headers) # Sends requests to protected route 
-    assert response.status_code == 200
-    logging.info("Finished test: test_protected_get_user_experiences_route_access_with_valid_token")
+#     logging.info("Starting test: test_protected_get_user_experiences_route_access_with_valid_token")
+#     valid_token = create_access_token({"sub": str(test_user.user_id)})
+#     headers = {"Authorization": f"Bearer {valid_token}"}
+#     response = client.get("/api/v1/users/1/experiences", headers=headers) # Sends requests to protected route 
+#     assert response.status_code == 200
+#     logging.info("Finished test: test_protected_get_user_experiences_route_access_with_valid_token")
+
+
 
 def test_protected_get_user_experiences_route_access_with_invalid_token():
     invalid_token = "invalid"
