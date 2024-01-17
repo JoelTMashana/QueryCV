@@ -1,8 +1,8 @@
-from fastapi import Depends, APIRouter, Query
+from fastapi import Depends, APIRouter, Query, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Experience
-from schemas import ExperienceRead
+from models import Experience, User
+from schemas import ExperienceRead, ExperienceCreate
 from helpers import check_user_exits
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
 from security import get_current_user 
@@ -45,4 +45,20 @@ def get_user_experiences(
     return {"gpt_response": gpt_response}
 
 
+
+
+@router.post("/users/{user_id}/experiences", response_model=ExperienceCreate)
+def create_experience_for_user(user_id: int, experience: ExperienceCreate, db: Session = Depends(get_db)):
+     # Check if user exists
+    db_user = db.query(User).filter(User.user_id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db_experience = Experience(**experience.dict(), user_id=user_id) 
+    
+    db.add(db_experience)
+    db.commit()
+    db.refresh(db_experience)
+
+    return db_experience
 
