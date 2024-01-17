@@ -47,9 +47,8 @@ def get_user_experiences(
 
 
 
-@router.post("/users/{user_id}/experiences", response_model=ExperienceCreate)
+@router.post("/api/v1/users/{user_id}/experiences", response_model=ExperienceRead)
 def create_experience_for_user(user_id: int, experience: ExperienceCreate, db: Session = Depends(get_db)):
-     # Check if user exists
     db_user = db.query(User).filter(User.user_id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
