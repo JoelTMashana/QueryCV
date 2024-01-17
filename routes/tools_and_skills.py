@@ -8,24 +8,27 @@ router = APIRouter()
 
 @router.post("/api/v1/tools", response_model=ToolRead)
 def create_tool(tool: ToolCreate, db: Session = Depends(get_db)):
+    try:
+        db_tool = Tool(**tool.dict())
+        db.add(db_tool)
+        db.commit()
+        db.refresh(db_tool)
+        return db_tool
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="An error occurred")
 
-    db_tool = Tool(**tool.dict()) 
-    
-    db.add(db_tool)
-    db.commit()
-    db.refresh(db_tool)
-
-    return db_tool
 
 
 @router.post("/api/v1/skills", response_model=SkillRead)
 def create_skill(skill: SkillCreate, db: Session = Depends(get_db)):
-
-    db_skill = Skill(**skill.dict()) 
-    
-    db.add(db_skill)
-    db.commit()
-    db.refresh(db_skill)
-
-    return db_skill
+    try:
+        db_skill = Skill(**skill.dict()) 
+        db.add(db_skill)
+        db.commit()
+        db.refresh(db_skill)
+        return db_skill
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="An error occured")
 
