@@ -10,8 +10,6 @@ from security import create_access_token
 
 client = TestClient(app)
 
-
-
 def test_login_successful(test_user, test_db_session):
     
     user_credentials = UserLogin(
@@ -41,25 +39,17 @@ def test_login_not_successful(test_user, test_db_session):
 def test_protected_get_user_experiences_route_access_with_valid_token(test_user, test_db_session):
     # Generate a valid token for the test user
     valid_token = create_access_token({"sub": str(test_user.user_id)})
-
     headers = {"Authorization": f"Bearer {valid_token}"}
-
-
     response = client.get("/api/v1/users/1/experiences", headers=headers) # Sends requests to protected route 
-
     assert response.status_code == 200
 
 
 def test_protected_get_user_experiences_route_access_with_invalid_token():
     invalid_token = "invalid"
-
     headers = {"Authorization": f"Bearer {invalid_token}"}
-
     response = client.get("/api/v1/users/1/experiences", headers=headers)
-
     assert response.status_code == 401
 
 def test_protected_get_user_experiences_route_access_without_token():
     response = client.get("/api/v1/users/1/experiences")
-
     assert response.status_code == 401

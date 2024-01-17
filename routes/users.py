@@ -55,9 +55,3 @@ def login(user_credentials: UserLogin, db: Session):
 def login_route(user_credentials: UserLogin, db: Session = Depends(get_db)):
     return login(user_credentials, db)
 
-
-
-
-@router.get("/api/v1/protected-route") # example usage
-def read_protected_route(current_user: UserAuth = Depends(get_current_user)):
-    return {"message": "Protected route accessed", "user": current_user}
