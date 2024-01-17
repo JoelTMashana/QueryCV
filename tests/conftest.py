@@ -3,12 +3,28 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import  Base
 from initial_data import initialise_db
-from models import Experience, Skill, ExperienceSkillLink, User, Tool, ExperienceToolLink
+from models import Experience, Skill, ExperienceSkillLink, User, Tool, ExperienceToolLink, UserToolLink, UserSkillLink
+from security import create_access_token
+from passlib.context import CryptContext
+import os
+import logging
 
+SECRET_KEY = os.environ.get("SECRET_KEY")
+
+print(SECRET_KEY)
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable not set")
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 @pytest.fixture(scope="function")
 def test_db_session():
+    logging.info("creating test database session")
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(bind=engine)
 
@@ -19,6 +35,7 @@ def test_db_session():
 
     db_session.close()
     Base.metadata.drop_all(bind=engine)
+    logging.info("test database session closed and tables dropped")
 
 
 
@@ -197,3 +214,23 @@ def experience_with_zero_skills_and_tools(test_db_session):
     test_db_session.commit()
 
     return experience.experience_id
+
+
+@pytest.fixture(scope="function")
+def test_user(test_db_session):
+    logging.info("creating the user fixure")
+
+    plain_password = 'plainpassword'
+    hashed_password = pwd_context.hash(plain_password)
+    test_user = User(
+        firstname="Jack", 
+        lastname="Dimon", 
+        email="jack@example.com", 
+        hashed_password=f'{hashed_password}'
+    )
+
+    test_db_session.add(test_user)
+    test_db_session.commit()
+    logging.info("commited user fixture to test_db_session")
+    return test_user
+

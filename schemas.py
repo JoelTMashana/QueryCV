@@ -15,7 +15,12 @@ class UserRead(UserBase):
     class Config: # Allows for conversion with alchemy ORM models
         orm_mode = True
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
+class UserAuth(UserBase):
+    user_id: int
 
 
 

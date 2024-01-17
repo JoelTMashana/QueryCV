@@ -5,14 +5,20 @@ from models import Experience
 from schemas import ExperienceRead
 from helpers import check_user_exits
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
+from security import get_current_user 
+from schemas import UserAuth
 
 router = APIRouter()
 
 @router.get("/api/v1/users/{user_id}/experiences")
-def get_user_experiences(user_id: int, user_query: str = Query(None), db: Session = Depends(get_db)):
+def get_user_experiences(
+    user_id: int, 
+    user_query: str = Query(None), 
+    db: Session = Depends(get_db),
+    current_user: UserAuth = Depends(get_current_user)
+    ):
 
     check_user_exits(user_id, db)
-
     work_experience_full_details = []
     work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
 

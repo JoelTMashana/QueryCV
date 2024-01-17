@@ -24,6 +24,7 @@ jobs:
     - name: Test with pytest
       env:
         TESTING: 1
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
       run: |
         $env:PYTHONPATH = "$env:PYTHONPATH;$(pwd)"
         pytest
