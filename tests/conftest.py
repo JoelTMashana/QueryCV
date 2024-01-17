@@ -4,8 +4,11 @@ from sqlalchemy.orm import sessionmaker
 from models import  Base
 from initial_data import initialise_db
 from models import Experience, Skill, ExperienceSkillLink, User, Tool, ExperienceToolLink
+from security import create_access_token
+from passlib.context import CryptContext
 
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @pytest.fixture(scope="function")
 def test_db_session():
@@ -197,3 +200,22 @@ def experience_with_zero_skills_and_tools(test_db_session):
     test_db_session.commit()
 
     return experience.experience_id
+
+
+@pytest.fixture(scope="function")
+def test_user(test_db_session):
+    
+    plain_password = 'plainpassword'
+    hashed_password = pwd_context.hash(plain_password)
+    test_user = User(
+        firstname="Jack", 
+        lastname="Dimon", 
+        email="jack@example.com", 
+        hashed_password=f'{hashed_password}'
+    )
+
+    test_db_session.add(test_user)
+    test_db_session.commit()
+
+    return test_user
+

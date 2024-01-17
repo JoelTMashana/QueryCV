@@ -17,7 +17,7 @@
 ## Testing
 - Set environment var TESTING=1
 - For Unix systems TESTING=1 pytest
-- Window $env:TESTING = "1"  pytest
+- Windows $env:TESTING = "1"  pytest
 
 
 ## Contact

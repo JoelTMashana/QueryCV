@@ -38,8 +38,22 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 
-@router.post("/api/v1/login")
-def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
+# @router.post("/api/v1/login")
+# def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
+#     user = db.query(User).filter(User.email == user_credentials.email).first()
+
+#     if not user or not verify_password(user_credentials.password, user.hashed_password):
+#         raise HTTPException(
+#             status_code=401,
+#             detail="Incorrect email address or password",
+#             headers={"WWW-Authenticate": "Bearer"},
+#         )
+
+#     access_token = create_access_token(data={"sub": str(user.user_id)})
+#     return {"access_token": access_token, "token_type": "bearer"}
+
+
+def login(user_credentials: UserLogin, db: Session):
     user = db.query(User).filter(User.email == user_credentials.email).first()
 
     if not user or not verify_password(user_credentials.password, user.hashed_password):
@@ -51,6 +65,12 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
 
     access_token = create_access_token(data={"sub": str(user.user_id)})
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/api/v1/login")
+def login_route(user_credentials: UserLogin, db: Session = Depends(get_db)):
+    return login(user_credentials, db)
+
 
 
 
