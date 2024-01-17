@@ -38,13 +38,13 @@ def test_login_not_successful(test_user, test_db_session):
 
 
 
-def test_protected_route_access_with_valid_token(test_user, test_db_session):
+def test_protected_get_user_experiences_route_access_with_valid_token(test_user, test_db_session):
     # Generate a valid token for the test user
     valid_token = create_access_token({"sub": str(test_user.user_id)})
 
     headers = {"Authorization": f"Bearer {valid_token}"}
 
 
-    response = client.get("/api/v1/users/1/experiences", headers=headers) # Sends requests to protected route
+    response = client.get("/api/v1/users/1/experiences", headers=headers) # Sends requests to protected route 
 
     assert response.status_code == 200
