@@ -11,7 +11,7 @@ router = APIRouter()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@router.get("/users", response_model=List[UserRead])
+@router.get("/users", response_model=List[UserRead]) # Only admin should be able to acess this route
 async def read_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return users
@@ -54,6 +54,6 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
 
 
 
-@router.get("/protected-route")
+@router.get("/protected-route") # example usage
 def read_protected_route(current_user: UserAuth = Depends(get_current_user)):
     return {"message": "Protected route accessed", "user": current_user}
