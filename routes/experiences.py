@@ -8,7 +8,7 @@ from services import  get_skills_related_to_experience, get_tools_related_to_exp
 from security import get_current_user 
 from schemas import UserAuth
 from typing import List
-from pydantic import BaseModel
+
 router = APIRouter()
 
 @router.get("/api/v1/users/{user_id}/experiences")

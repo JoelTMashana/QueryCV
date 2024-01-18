@@ -14,7 +14,7 @@ def create_tool(tool: ToolCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_tool)
         return db_tool
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="An error occurred")
 
@@ -28,7 +28,7 @@ def create_skill(skill: SkillCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_skill)
         return db_skill
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="An error occured")
 
