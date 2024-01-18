@@ -23,3 +23,8 @@
 
 ## Contact
 - For issues not covered in this guide, contact me at: `<joeltmashana@gmail.com>`
+
+## Note to self
+- Migrations 
+- Create Migration Script: alembic revision --autogenerate -m "<Purpose of script>"
+- Run the mgiration: alembic upgrade head
