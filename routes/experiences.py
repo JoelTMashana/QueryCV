@@ -2,7 +2,7 @@ from fastapi import Depends, APIRouter, Query, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink
-from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink
+from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
 from helpers import check_user_exits
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
 from security import get_current_user 
@@ -108,3 +108,23 @@ def link_tools_to_experience(experience_id: int, tools_selected_by_user: ToolLin
     return {"message": "Tools linked to experience successfully"}
 
 
+
+@router.patch("/api/v1/experiences/{experience_id}")
+def update_experience(experience_id: int, updated_experience: ExperienceUpdate, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience:
+        raise HTTPException(status_code=404, detail="Experience not found")
+    
+    print(db_experience.user_id)
+    print('curr user: ', current_user.user_id)
+    
+    if db_experience.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorised to update this experience")
+
+   
+    for attritube, value in vars(updated_experience).items():
+        if value is not None:
+            setattr(db_experience, attritube, value)
+
+    db.commit()
+    return db_experience
