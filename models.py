@@ -35,7 +35,7 @@ class Experience(Base):
 class Skill(Base):
     __tablename__ = 'skills'
     skill_id = Column(Integer, primary_key=True, index=True)
-    skill_name = Column(String(35), index=True)
+    skill_name = Column(String(35), unique=True, index=True)
     user_skills = relationship('UserSkillLink', back_populates='skill')
     experience_skills = relationship('ExperienceSkillLink', back_populates='skill')
 
@@ -43,7 +43,7 @@ class Skill(Base):
 class Tool(Base):
     __tablename__ = 'tools'
     tool_id = Column(Integer, primary_key=True, index=True)
-    tool_name = Column(String(35), index=True)
+    tool_name = Column(String(35), unique=True, index=True)
     user_tools = relationship('UserToolLink', back_populates='tool')
     experience_tools = relationship('ExperienceToolLink', back_populates='tool')
 

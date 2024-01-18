@@ -1,12 +1,13 @@
-from fastapi import Depends, APIRouter, Query
+from fastapi import Depends, APIRouter, Query, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Experience
-from schemas import ExperienceRead
+from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink
+from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink
 from helpers import check_user_exits
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
 from security import get_current_user 
 from schemas import UserAuth
+from typing import List
 
 router = APIRouter()
 
@@ -15,7 +16,7 @@ def get_user_experiences(
     user_id: int, 
     user_query: str = Query(None), 
     db: Session = Depends(get_db),
-    current_user: UserAuth = Depends(get_current_user)
+    current_user: UserAuth = Depends(get_current_user) # Must add to rest to place behind auth wall 
     ):
 
     check_user_exits(user_id, db)
@@ -40,9 +41,70 @@ def get_user_experiences(
         )
         work_experience_full_details.append(experience_detail)
     formatted_experiences = format_experiences_for_gpt(work_experience_full_details)
-    
+    print(formatted_experiences)
     gpt_response = query_gpt(formatted_experiences, user_query)
     return {"gpt_response": gpt_response}
 
+
+
+
+@router.post("/api/v1/users/{user_id}/experiences", response_model=ExperienceRead)
+def create_experience_for_user(user_id: int, experience: ExperienceCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.user_id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db_experience = Experience(**experience.dict(), user_id=user_id) 
+    
+    db.add(db_experience)
+    db.commit()
+    db.refresh(db_experience)
+
+    return db_experience
+
+
+
+
+@router.post("/api/v1/experiences/{experience_id}/skills")
+def link_skills_to_experience(experience_id: int, skills_selected_by_user: SkillLink, db: Session = Depends(get_db)):
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience:
+        raise HTTPException(status_code=404, detail="Experience not found")
+
+    for selected_skill_id in skills_selected_by_user.skill_ids:
+        db_skill = db.query(Skill).filter(Skill.skill_id == selected_skill_id).first()
+        if not db_skill:
+            raise HTTPException(status_code=404, detail=f"Skill ID {selected_skill_id} not found")
+
+        existing_link = db.query(ExperienceSkillLink).filter_by(experience_id=experience_id, skill_id=selected_skill_id).first()
+        if not existing_link:
+            db_experience_skill = ExperienceSkillLink(experience_id=experience_id, skill_id=selected_skill_id)
+            db.add(db_experience_skill)
+        else:
+            return {"message": "Skills alreay linked to experience"}
+    db.commit()
+    return {"message": "Skills linked to experience successfully"}
+
+
+
+@router.post("/api/v1/experiences/{experience_id}/tools")
+def link_tools_to_experience(experience_id: int, tools_selected_by_user: ToolLink, db: Session = Depends(get_db)):
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience:
+        raise HTTPException(status_code=404, detail="Experience not found")
+
+    for selected_tool_id in tools_selected_by_user.tool_ids:
+        db_tool = db.query(Tool).filter(Tool.tool_id == selected_tool_id).first()
+        if not db_tool:
+            raise HTTPException(status_code=404, detail=f"Tool ID {selected_tool_id} not found")
+
+        existing_link = db.query(ExperienceToolLink).filter_by(experience_id=experience_id, tool_id=selected_tool_id).first()
+        if not existing_link:
+            db_experience_tool = ExperienceToolLink(experience_id=experience_id, tool_id=selected_tool_id)
+            db.add(db_experience_tool)
+        else:
+            return {"message": "Tool already linked to experience"}
+    db.commit()
+    return {"message": "Tools linked to experience successfully"}
 
 
