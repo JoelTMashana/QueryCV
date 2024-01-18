@@ -89,8 +89,6 @@ def initialise_db(engine):
             ]
             db.add_all(intial_experience_tools_link)
 
-
-
         db.commit()
         logging.info("Database initialised with predefined data.")
     except Exception as e:

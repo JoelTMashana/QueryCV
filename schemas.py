@@ -65,3 +65,8 @@ class ExperienceRead(ExperienceBase):
     tools: List[ToolRead] = []
     class Config:
         orm_mode = True
+
+
+
+class SkillLink(BaseModel):
+    skill_ids: List[int]

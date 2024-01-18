@@ -55,3 +55,4 @@ def login(user_credentials: UserLogin, db: Session):
 def login_route(user_credentials: UserLogin, db: Session = Depends(get_db)):
     return login(user_credentials, db)
 
+
