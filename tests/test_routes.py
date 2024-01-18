@@ -14,8 +14,8 @@ def test_read_home():
 
 
 
-def test_link_skills_to_user(test_db_session):
-    test_user = User(firstname="Test", lastname="User", email="test@example.com", hashed_password="hashed_test")
+def test_link_skills_to_user(test_user, test_db_session):
+    # test_user = User(firstname="Test", lastname="User", email="test@example.com", hashed_password="hashed_test")
     test_db_session.add(test_user)
     test_db_session.commit()
 
