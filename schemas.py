@@ -79,3 +79,6 @@ class ToolLink(BaseModel):
 
 class UserSkills(BaseModel):
     skill_ids: List[int]
+
+class UserTools(BaseModel):
+    tool_ids: List[int]
