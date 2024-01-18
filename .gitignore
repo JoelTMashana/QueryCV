@@ -1,4 +1,4 @@
 .env
 __pycache__/
 *.pyc
-.user_work_experience
+.user_work_experience.db
