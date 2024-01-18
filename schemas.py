@@ -68,5 +68,10 @@ class ExperienceRead(ExperienceBase):
 
 
 
+
+
 class SkillLink(BaseModel):
     skill_ids: List[int]
+
+class ToolLink(BaseModel):
+    tool_ids: List[int]

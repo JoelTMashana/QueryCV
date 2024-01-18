@@ -1,8 +1,8 @@
 from fastapi import Depends, APIRouter, Query, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Experience, User, ExperienceSkillLink, Skill
-from schemas import ExperienceRead, ExperienceCreate, SkillLink
+from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink
+from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink
 from helpers import check_user_exits
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
 from security import get_current_user 
@@ -86,3 +86,25 @@ def link_skills_to_experience(experience_id: int, skill_link: SkillLink, db: Ses
             return {"message": "Skills alreay linked to experience"}
     db.commit()
     return {"message": "Skills linked to experience successfully"}
+
+
+
+@router.post("/api/v1/experiences/{experience_id}/tools")
+def link_tools_to_experience(experience_id: int, tool_link: ToolLink, db: Session = Depends(get_db)):
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience:
+        raise HTTPException(status_code=404, detail="Experience not found")
+
+    for tool_id in tool_link.tool_ids:
+        db_tool = db.query(Tool).filter(Tool.tool_id == tool_id).first()
+        if not db_tool:
+            raise HTTPException(status_code=404, detail=f"Tool ID {tool_id} not found")
+
+        existing_link = db.query(ExperienceToolLink).filter_by(experience_id=experience_id, tool_id=tool_id).first()
+        if not existing_link:
+            db_experience_tool = ExperienceToolLink(experience_id=experience_id, tool_id=tool_id)
+            db.add(db_experience_tool)
+        else:
+            return {"message": "Tool already linked to experience"}
+    db.commit()
+    return {"message": "Tools linked to experience successfully"}
