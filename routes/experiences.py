@@ -129,24 +129,13 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
     db.commit()
     return db_experience
 
-# def link_skills_to_user(user_id: int, skills_selected_by_user: UserSkills, db: Session = Depends(get_db)):
-#     db_user = db.query(User).filter(User.user_id == user_id).first()
-#     if not db_user:
-#         raise HTTPException(status_code=404, detail="User not found")
+def determine_items_to_remove_and_add(updated_item_set, current_item_set):
+    
+    
+    items_to_add = set(updated_item_set) - set(current_item_set)
+    items_to_remove = set(current_item_set) - set(updated_item_set)
 
-#     for selected_skill_id in skills_selected_by_user.skill_ids:
-#         db_skill = db.query(Skill).filter(Skill.skill_id == selected_skill_id).first()
-#         if not db_skill:
-#             raise HTTPException(status_code=404, detail=f"Skill ID {selected_skill_id} not found")
-
-#         existing_link = db.query(UserSkillLink).filter_by(user_id=user_id, skill_id=selected_skill_id).first()
-#         if not existing_link:
-#             db_user_skill = UserSkillLink(user_id=user_id, skill_id=selected_skill_id)
-#             db.add(db_user_skill)
-
-#     db.commit()
-#     return {"message": "Skills linked to user successfully"}
-
+    return items_to_add, items_to_remove
 
 @router.patch("/api/v1/experiences/{experience_id}/skills")
 def update_skills_associated_with_user_experience(
@@ -162,8 +151,10 @@ def update_skills_associated_with_user_experience(
 
     current_skill_ids_associated_with_experience = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
     
-    skills_to_add = set(updated_skills.skill_ids) - set(current_skill_ids_associated_with_experience) # Set difference operations, determing which skills are in update but not curr,
-    skills_to_remove = set(current_skill_ids_associated_with_experience) - set(updated_skills.skill_ids)
+    # skills_to_add = set(updated_skills.skill_ids) - set(current_skill_ids_associated_with_experience) # Set difference operations, determing which skills are in update but not curr,
+    # skills_to_remove = set(current_skill_ids_associated_with_experience) - set(updated_skills.skill_ids)
+
+    skills_to_add, skills_to_remove = determine_items_to_remove_and_add(updated_skills.skill_ids, current_skill_ids_associated_with_experience)
 
     for skill_id in skills_to_add:
         db_skill = db.query(Skill).filter(Skill.skill_id == skill_id).first() # Check if skills exiists
