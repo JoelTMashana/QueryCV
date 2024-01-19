@@ -130,6 +130,17 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
     return db_experience
 
 
+def remove_items_from_link_table(item_ids, item_type, link_model, link_model_kwargs, db):
+    """
+    Removes items from a link table.
+    """
+    for item_id in item_ids:
+        key_name = 'skill_id' if item_type == 'skill' else 'tool_id'
+        link_instance = db.query(link_model).filter_by(**link_model_kwargs, **{key_name: item_id}).first()
+        if link_instance:
+            db.delete(link_instance)
+
+
 @router.patch("/api/v1/experiences/{experience_id}/skills")
 def update_skills_associated_with_user_experience(
     experience_id: int, 
@@ -148,11 +159,11 @@ def update_skills_associated_with_user_experience(
 
     add_items_to_link_table(skills_to_add, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
     
-    for skill_id in skills_to_remove:
-        db_experience_skill = db.query(ExperienceSkillLink).filter_by(experience_id=experience_id, skill_id=skill_id).first()
-        if db_experience_skill:
-            db.delete(db_experience_skill) # Delete the link
-    
+    # for skill_id in skills_to_remove:
+    #     db_experience_skill = db.query(ExperienceSkillLink).filter_by(experience_id=experience_id, skill_id=skill_id).first()
+    #     if db_experience_skill:
+    #         db.delete(db_experience_skill) # Delete the link
+    remove_items_from_link_table(skills_to_remove, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
 
     db.flush()
 
@@ -165,12 +176,12 @@ def update_skills_associated_with_user_experience(
 
     add_items_to_link_table(skills_to_add_to_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
 
-    for skill_id in skills_to_remove_from_user:
-        db_user_skill = db.query(UserSkillLink).filter_by(user_id=current_user.user_id, skill_id=skill_id).first()
-        if db_user_skill:
-            db.delete(db_user_skill)
+    # for skill_id in skills_to_remove_from_user:
+    #     db_user_skill = db.query(UserSkillLink).filter_by(user_id=current_user.user_id, skill_id=skill_id).first()
+    #     if db_user_skill:
+    #         db.delete(db_user_skill)
+    remove_items_from_link_table(skills_to_remove_from_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
     db.commit()
     return {"message": "Skills associated with experience updated successfully"}
-
 
 
