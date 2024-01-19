@@ -111,14 +111,10 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
     db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
     if not db_experience:
         raise HTTPException(status_code=404, detail="Experience not found")
-    
-    print(db_experience.user_id)
-    print('curr user: ', current_user.user_id)
 
     if db_experience.user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Not authorised to update this experience")
 
-   
     for attritube, value in vars(updated_experience).items():
         if value is not None:
             setattr(db_experience, attritube, value)
@@ -160,6 +156,7 @@ def update_tools_associated_with_user_and_experience(
     db: Session = Depends(get_db), 
     current_user: UserAuth = Depends(get_current_user)
 ):
+
     db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
     if not db_experience or db_experience.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
