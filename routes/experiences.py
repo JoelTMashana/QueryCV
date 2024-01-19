@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink
 from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
-from helpers import check_user_exits
+from helpers import check_user_exits, determine_items_to_remove_and_add
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
 from security import get_current_user 
 from schemas import UserAuth
@@ -129,17 +129,6 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
     db.commit()
     return db_experience
 
-def determine_items_to_remove_and_add(updated_items, current_items):
-    """
-    Determines items to add and remove based on the updated and current sets.
-    """
-    updated_set = set(updated_items)
-    current_set = set(current_items)
-
-    items_to_add = updated_set - current_set
-    items_to_remove = current_set - updated_set
-
-    return items_to_add, items_to_remove
 
 
 @router.patch("/api/v1/experiences/{experience_id}/skills")
