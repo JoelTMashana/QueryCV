@@ -132,6 +132,19 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
 
 
 
+def update_experience_skill_link(experience_id, updated_skill_ids, db):
+    current_skill_ids = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
+    skills_to_add, skills_to_remove = determine_items_to_remove_and_add(updated_skill_ids, current_skill_ids)
+    add_items_to_link_table(skills_to_add, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
+    remove_items_from_link_table(skills_to_remove, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
+
+def update_user_skill_link(user_id, updated_skill_ids, db):
+    current_skill_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == user_id).all()]
+    skills_to_add, skills_to_remove = determine_items_to_remove_and_add(updated_skill_ids, current_skill_ids)
+    add_items_to_link_table(skills_to_add, 'skill', UserSkillLink, {'user_id': user_id}, db)
+    remove_items_from_link_table(skills_to_remove, 'skill', UserSkillLink, {'user_id': user_id}, db)
+
+
 @router.patch("/api/v1/experiences/{experience_id}/skills")
 def update_skills_associated_with_user_experience(
     experience_id: int, 
@@ -144,20 +157,21 @@ def update_skills_associated_with_user_experience(
     if not db_experience or db_experience.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
 
-    current_skill_ids_associated_with_experience = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
-    skills_to_add, skills_to_remove = determine_items_to_remove_and_add(updated_skills.skill_ids, current_skill_ids_associated_with_experience)
-    add_items_to_link_table(skills_to_add, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
-    remove_items_from_link_table(skills_to_remove, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
+    # Update the Experience skill table to reflect changes
+    # current_skill_ids_associated_with_experience = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
+    # skills_to_add, skills_to_remove = determine_items_to_remove_and_add(updated_skills.skill_ids, current_skill_ids_associated_with_experience)
+    # add_items_to_link_table(skills_to_add, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
+    # remove_items_from_link_table(skills_to_remove, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
+    update_experience_skill_link(experience_id, updated_skills.skill_ids, db)
+    db.flush() # Sychronise
 
-    db.flush()
-
+    # Update the User skill link table to reflect changes
     updated_experience_skill_ids = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
-    current_user_skill_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == current_user.user_id).all()]
-    skills_to_add_to_user, skills_to_remove_from_user = determine_items_to_remove_and_add(updated_experience_skill_ids, current_user_skill_ids)
-    add_items_to_link_table(skills_to_add_to_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
-    remove_items_from_link_table(skills_to_remove_from_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
-    
-    db.commit()
+
+    # current_user_skill_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == current_user.user_id).all()]
+    # skills_to_add_to_user, skills_to_remove_from_user = determine_items_to_remove_and_add(updated_experience_skill_ids, current_user_skill_ids)
+    # add_items_to_link_table(skills_to_add_to_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
+    # remove_items_from_link_table(skills_to_remove_from_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
+    update_user_skill_link(current_user.user_id, updated_experience_skill_ids, db)
+    db.commit() 
     return {"message": "Skills associated with experience updated successfully"}
-
-
