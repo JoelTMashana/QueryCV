@@ -129,6 +129,28 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
     db.commit()
     return db_experience
 
+def add_items_to_link_table(item_ids, item_type, link_model, link_model_kwargs, db):
+    """
+    Adds items to a link table.
+
+    :param item_ids: IDs of the itemsto add
+    :param item_type: Type of the item
+    :param link_model: The link table model
+    :param link_model_kwargs: Additional keyword arguments.
+    :param db: DB session.
+    """
+    for item_id in item_ids:
+        key_name = 'skill_id' if item_type == 'skill' else 'tool_id'
+
+        if item_type == 'skill':
+            if not db.query(Skill).filter(Skill.skill_id == item_id).first():
+                raise HTTPException(status_code=404, detail=f"Item ID {item_id} not found")
+        else:
+            if not db.query(Tool).filter(Tool.tool_id == item_id).first():  
+                raise HTTPException(status_code=404, detail=f"Item ID {item_id} not found")
+           
+        link_instance = link_model(**link_model_kwargs, **{key_name: item_id})
+        db.add(link_instance)
 
 
 @router.patch("/api/v1/experiences/{experience_id}/skills")
@@ -147,12 +169,7 @@ def update_skills_associated_with_user_experience(
 
     skills_to_add, skills_to_remove = determine_items_to_remove_and_add(updated_skills.skill_ids, current_skill_ids_associated_with_experience)
 
-    for skill_id in skills_to_add:
-        db_skill = db.query(Skill).filter(Skill.skill_id == skill_id).first() # Check if skills exiists
-        if not db_skill:
-            raise HTTPException(status_code=404, detail=f"Skill ID {skill_id} not found")
-        db_experience_skill = ExperienceSkillLink(experience_id=experience_id, skill_id=skill_id)
-        db.add(db_experience_skill)
+    add_items_to_link_table(skills_to_add, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
     
     for skill_id in skills_to_remove:
         db_experience_skill = db.query(ExperienceSkillLink).filter_by(experience_id=experience_id, skill_id=skill_id).first()
@@ -163,7 +180,6 @@ def update_skills_associated_with_user_experience(
     db.flush()
 
 
-
     updated_experience_skill_ids = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
     
     current_user_skill_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == current_user.user_id).all()]
@@ -171,9 +187,13 @@ def update_skills_associated_with_user_experience(
     skills_to_add_to_user, skills_to_remove_from_user = determine_items_to_remove_and_add(updated_experience_skill_ids, current_user_skill_ids)
 
 
-    for skill_id in skills_to_add_to_user:
-        db_user_skill = UserSkillLink(user_id=current_user.user_id, skill_id=skill_id)
-        db.add(db_user_skill)
+    # for skill_id in skills_to_add_to_user:
+    #     db_skill = db.query(Skill).filter(Skill.skill_id == skill_id).first() # Check if skills exiists
+    #     if not db_skill:
+    #         raise HTTPException(status_code=404, detail=f"Skill ID {skill_id} not found")
+    #     db_user_skill = UserSkillLink(user_id=current_user.user_id, skill_id=skill_id)
+    #     db.add(db_user_skill)
+    add_items_to_link_table(skills_to_add, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
 
     for skill_id in skills_to_remove_from_user:
         db_user_skill = db.query(UserSkillLink).filter_by(user_id=current_user.user_id, skill_id=skill_id).first()
@@ -181,3 +201,6 @@ def update_skills_associated_with_user_experience(
             db.delete(db_user_skill)
     db.commit()
     return {"message": "Skills associated with experience updated successfully"}
+
+
+
