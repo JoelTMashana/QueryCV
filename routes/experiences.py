@@ -129,13 +129,16 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
     db.commit()
     return db_experience
 
-def determine_items_to_remove_and_add(updated_item_set, current_item_set):
-    
-    
-    items_to_add = set(updated_item_set) - set(current_item_set)
-    items_to_remove = set(current_item_set) - set(updated_item_set)
+def determine_items_to_remove_and_add(updated_items, current_items):
+
+    updated_set = set(updated_items)
+    current_set = set(current_items)
+
+    items_to_add = updated_set - current_set
+    items_to_remove = current_set - updated_set
 
     return items_to_add, items_to_remove
+
 
 @router.patch("/api/v1/experiences/{experience_id}/skills")
 def update_skills_associated_with_user_experience(
