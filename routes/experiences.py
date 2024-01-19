@@ -130,7 +130,9 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
     return db_experience
 
 def determine_items_to_remove_and_add(updated_items, current_items):
-
+    """
+    Determines items to add and remove based on the updated and current sets.
+    """
     updated_set = set(updated_items)
     current_set = set(current_items)
 
@@ -153,9 +155,6 @@ def update_skills_associated_with_user_experience(
         raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
 
     current_skill_ids_associated_with_experience = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
-    
-    # skills_to_add = set(updated_skills.skill_ids) - set(current_skill_ids_associated_with_experience) # Set difference operations, determing which skills are in update but not curr,
-    # skills_to_remove = set(current_skill_ids_associated_with_experience) - set(updated_skills.skill_ids)
 
     skills_to_add, skills_to_remove = determine_items_to_remove_and_add(updated_skills.skill_ids, current_skill_ids_associated_with_experience)
 
@@ -174,12 +173,14 @@ def update_skills_associated_with_user_experience(
 
     db.flush()
 
+
+
     updated_experience_skill_ids = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
     
     current_user_skill_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == current_user.user_id).all()]
 
-    skills_to_add_to_user = set(updated_experience_skill_ids) - set(current_user_skill_ids)
-    skills_to_remove_from_user = set(current_user_skill_ids) - set(updated_experience_skill_ids)
+    skills_to_add_to_user, skills_to_remove_from_user = determine_items_to_remove_and_add(updated_experience_skill_ids, current_user_skill_ids)
+
 
     for skill_id in skills_to_add_to_user:
         db_user_skill = UserSkillLink(user_id=current_user.user_id, skill_id=skill_id)
