@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink
 from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
-from helpers import check_user_exits, determine_items_to_remove_and_add
+from helpers import check_user_exits, determine_items_to_remove_and_add, add_items_to_link_table
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
 from security import get_current_user 
 from schemas import UserAuth
@@ -128,29 +128,6 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
 
     db.commit()
     return db_experience
-
-def add_items_to_link_table(item_ids, item_type, link_model, link_model_kwargs, db):
-    """
-    Adds items to a link table.
-
-    :param item_ids: IDs of the itemsto add
-    :param item_type: Type of the item
-    :param link_model: The link table model
-    :param link_model_kwargs: Additional keyword arguments.
-    :param db: DB session.
-    """
-    for item_id in item_ids:
-        key_name = 'skill_id' if item_type == 'skill' else 'tool_id'
-
-        if item_type == 'skill':
-            if not db.query(Skill).filter(Skill.skill_id == item_id).first():
-                raise HTTPException(status_code=404, detail=f"Item ID {item_id} not found")
-        else:
-            if not db.query(Tool).filter(Tool.tool_id == item_id).first():  
-                raise HTTPException(status_code=404, detail=f"Item ID {item_id} not found")
-           
-        link_instance = link_model(**link_model_kwargs, **{key_name: item_id})
-        db.add(link_instance)
 
 
 @router.patch("/api/v1/experiences/{experience_id}/skills")
