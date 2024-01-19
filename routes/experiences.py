@@ -186,14 +186,7 @@ def update_skills_associated_with_user_experience(
 
     skills_to_add_to_user, skills_to_remove_from_user = determine_items_to_remove_and_add(updated_experience_skill_ids, current_user_skill_ids)
 
-
-    # for skill_id in skills_to_add_to_user:
-    #     db_skill = db.query(Skill).filter(Skill.skill_id == skill_id).first() # Check if skills exiists
-    #     if not db_skill:
-    #         raise HTTPException(status_code=404, detail=f"Skill ID {skill_id} not found")
-    #     db_user_skill = UserSkillLink(user_id=current_user.user_id, skill_id=skill_id)
-    #     db.add(db_user_skill)
-    add_items_to_link_table(skills_to_add, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
+    add_items_to_link_table(skills_to_add_to_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
 
     for skill_id in skills_to_remove_from_user:
         db_user_skill = db.query(UserSkillLink).filter_by(user_id=current_user.user_id, skill_id=skill_id).first()
