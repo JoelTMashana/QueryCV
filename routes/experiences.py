@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink
 from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
-from helpers import check_user_exits, determine_items_to_remove_and_add, add_items_to_link_table
+from helpers import check_user_exits, determine_items_to_remove_and_add, add_items_to_link_table, remove_items_from_link_table
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
 from security import get_current_user 
 from schemas import UserAuth
@@ -130,15 +130,6 @@ def update_user_experience(experience_id: int, updated_experience: ExperienceUpd
     return db_experience
 
 
-def remove_items_from_link_table(item_ids, item_type, link_model, link_model_kwargs, db):
-    """
-    Removes items from a link table.
-    """
-    for item_id in item_ids:
-        key_name = 'skill_id' if item_type == 'skill' else 'tool_id'
-        link_instance = db.query(link_model).filter_by(**link_model_kwargs, **{key_name: item_id}).first()
-        if link_instance:
-            db.delete(link_instance)
 
 
 @router.patch("/api/v1/experiences/{experience_id}/skills")
@@ -154,33 +145,18 @@ def update_skills_associated_with_user_experience(
         raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
 
     current_skill_ids_associated_with_experience = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
-
     skills_to_add, skills_to_remove = determine_items_to_remove_and_add(updated_skills.skill_ids, current_skill_ids_associated_with_experience)
-
     add_items_to_link_table(skills_to_add, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
-    
-    # for skill_id in skills_to_remove:
-    #     db_experience_skill = db.query(ExperienceSkillLink).filter_by(experience_id=experience_id, skill_id=skill_id).first()
-    #     if db_experience_skill:
-    #         db.delete(db_experience_skill) # Delete the link
     remove_items_from_link_table(skills_to_remove, 'skill', ExperienceSkillLink, {'experience_id': experience_id}, db)
 
     db.flush()
 
-
     updated_experience_skill_ids = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
-    
     current_user_skill_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == current_user.user_id).all()]
-
     skills_to_add_to_user, skills_to_remove_from_user = determine_items_to_remove_and_add(updated_experience_skill_ids, current_user_skill_ids)
-
     add_items_to_link_table(skills_to_add_to_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
-
-    # for skill_id in skills_to_remove_from_user:
-    #     db_user_skill = db.query(UserSkillLink).filter_by(user_id=current_user.user_id, skill_id=skill_id).first()
-    #     if db_user_skill:
-    #         db.delete(db_user_skill)
     remove_items_from_link_table(skills_to_remove_from_user, 'skill', UserSkillLink, {'user_id': current_user.user_id}, db)
+    
     db.commit()
     return {"message": "Skills associated with experience updated successfully"}
 

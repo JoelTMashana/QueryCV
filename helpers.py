@@ -47,3 +47,13 @@ def add_items_to_link_table(item_ids, item_type, link_model, link_model_kwargs, 
            
         link_instance = link_model(**link_model_kwargs, **{key_name: item_id})
         db.add(link_instance)
+
+def remove_items_from_link_table(item_ids, item_type, link_model, link_model_kwargs, db):
+    """
+    Removes items from a link table.
+    """
+    for item_id in item_ids:
+        key_name = 'skill_id' if item_type == 'skill' else 'tool_id'
+        link_instance = db.query(link_model).filter_by(**link_model_kwargs, **{key_name: item_id}).first()
+        if link_instance:
+            db.delete(link_instance)
