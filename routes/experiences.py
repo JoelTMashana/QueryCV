@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter, Query, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink
+from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink
 from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
 from helpers import check_user_exits
 from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
@@ -110,14 +110,14 @@ def link_tools_to_experience(experience_id: int, tools_selected_by_user: ToolLin
 
 
 @router.patch("/api/v1/experiences/{experience_id}")
-def update_experience(experience_id: int, updated_experience: ExperienceUpdate, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+def update_user_experience(experience_id: int, updated_experience: ExperienceUpdate, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
     db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
     if not db_experience:
         raise HTTPException(status_code=404, detail="Experience not found")
     
     print(db_experience.user_id)
     print('curr user: ', current_user.user_id)
-    
+
     if db_experience.user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Not authorised to update this experience")
 
@@ -128,3 +128,79 @@ def update_experience(experience_id: int, updated_experience: ExperienceUpdate, 
 
     db.commit()
     return db_experience
+
+# def link_skills_to_user(user_id: int, skills_selected_by_user: UserSkills, db: Session = Depends(get_db)):
+#     db_user = db.query(User).filter(User.user_id == user_id).first()
+#     if not db_user:
+#         raise HTTPException(status_code=404, detail="User not found")
+
+#     for selected_skill_id in skills_selected_by_user.skill_ids:
+#         db_skill = db.query(Skill).filter(Skill.skill_id == selected_skill_id).first()
+#         if not db_skill:
+#             raise HTTPException(status_code=404, detail=f"Skill ID {selected_skill_id} not found")
+
+#         existing_link = db.query(UserSkillLink).filter_by(user_id=user_id, skill_id=selected_skill_id).first()
+#         if not existing_link:
+#             db_user_skill = UserSkillLink(user_id=user_id, skill_id=selected_skill_id)
+#             db.add(db_user_skill)
+
+#     db.commit()
+#     return {"message": "Skills linked to user successfully"}
+
+
+@router.patch("/api/v1/experiences/{experience_id}/skills")
+def update_skills_associated_with_user_experience(
+    experience_id: int, 
+    updated_skills: SkillLink, 
+    db: Session = Depends(get_db), 
+    current_user: UserAuth = Depends(get_current_user)
+    ):
+    
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience or db_experience.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
+
+    current_skill_ids_associated_with_experience = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
+    
+    skills_to_add = set(updated_skills.skill_ids) - set(current_skill_ids_associated_with_experience) # Set difference operations, determing which skills are in update but not curr,
+    skills_to_remove = set(current_skill_ids_associated_with_experience) - set(updated_skills.skill_ids)
+
+     # Add new skills
+    for skill_id in skills_to_add:
+        db_skill = db.query(Skill).filter(Skill.skill_id == skill_id).first() # Check if skills exiists
+        if not db_skill:
+            raise HTTPException(status_code=404, detail=f"Skill ID {skill_id} not found")
+        db_experience_skill = ExperienceSkillLink(experience_id=experience_id, skill_id=skill_id)
+        db.add(db_experience_skill)
+    
+    # Remove outdated skills
+    for skill_id in skills_to_remove:
+        db_experience_skill = db.query(ExperienceSkillLink).filter_by(experience_id=experience_id, skill_id=skill_id).first()
+        if db_experience_skill:
+            db.delete(db_experience_skill) # Delete the link
+    
+    print("Current ExperienceSkillLink state:", [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()])
+
+    db.flush()
+    print("After flush:", [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()])
+
+    updated_experience_skill_ids = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
+    print('Updated', updated_experience_skill_ids)
+    
+    current_user_skill_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == current_user.user_id).all()]
+
+    skills_to_add_to_user = set(updated_experience_skill_ids) - set(current_user_skill_ids)
+    skills_to_remove_from_user = set(current_user_skill_ids) - set(updated_experience_skill_ids)
+
+    # Add new skills to the user
+    for skill_id in skills_to_add_to_user:
+        db_user_skill = UserSkillLink(user_id=current_user.user_id, skill_id=skill_id)
+        db.add(db_user_skill)
+
+    # Remove outdated skills from the user
+    for skill_id in skills_to_remove_from_user:
+        db_user_skill = db.query(UserSkillLink).filter_by(user_id=current_user.user_id, skill_id=skill_id).first()
+        if db_user_skill:
+            db.delete(db_user_skill)
+    db.commit()
+    return {"message": "Skills associated with experience updated successfully"}
