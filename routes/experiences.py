@@ -165,7 +165,6 @@ def update_skills_associated_with_user_experience(
     skills_to_add = set(updated_skills.skill_ids) - set(current_skill_ids_associated_with_experience) # Set difference operations, determing which skills are in update but not curr,
     skills_to_remove = set(current_skill_ids_associated_with_experience) - set(updated_skills.skill_ids)
 
-     # Add new skills
     for skill_id in skills_to_add:
         db_skill = db.query(Skill).filter(Skill.skill_id == skill_id).first() # Check if skills exiists
         if not db_skill:
@@ -173,31 +172,25 @@ def update_skills_associated_with_user_experience(
         db_experience_skill = ExperienceSkillLink(experience_id=experience_id, skill_id=skill_id)
         db.add(db_experience_skill)
     
-    # Remove outdated skills
     for skill_id in skills_to_remove:
         db_experience_skill = db.query(ExperienceSkillLink).filter_by(experience_id=experience_id, skill_id=skill_id).first()
         if db_experience_skill:
             db.delete(db_experience_skill) # Delete the link
     
-    print("Current ExperienceSkillLink state:", [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()])
 
     db.flush()
-    print("After flush:", [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()])
 
     updated_experience_skill_ids = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
-    print('Updated', updated_experience_skill_ids)
     
     current_user_skill_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == current_user.user_id).all()]
 
     skills_to_add_to_user = set(updated_experience_skill_ids) - set(current_user_skill_ids)
     skills_to_remove_from_user = set(current_user_skill_ids) - set(updated_experience_skill_ids)
 
-    # Add new skills to the user
     for skill_id in skills_to_add_to_user:
         db_user_skill = UserSkillLink(user_id=current_user.user_id, skill_id=skill_id)
         db.add(db_user_skill)
 
-    # Remove outdated skills from the user
     for skill_id in skills_to_remove_from_user:
         db_user_skill = db.query(UserSkillLink).filter_by(user_id=current_user.user_id, skill_id=skill_id).first()
         if db_user_skill:
