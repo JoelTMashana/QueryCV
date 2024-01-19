@@ -8,6 +8,7 @@ from schemas import SkillRead, ToolRead
 from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy.exc import SQLAlchemyError
+from models import Skill, Tool, UserSkillLink, UserToolLink
 
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -104,3 +105,75 @@ def get_tools_related_to_experience(experience_id: int, db: Session) -> List[Too
         raise HTTPException(status_code=500, detail="Database error while retrieving tools")
 
 
+
+def determine_items_to_remove_and_add(updated_items, current_items):
+    """
+    Determines items to add and remove based on the updated and current sets.
+    """
+    updated_set = set(updated_items)
+    current_set = set(current_items)
+
+    items_to_add = updated_set - current_set
+    items_to_remove = current_set - updated_set
+
+    return items_to_add, items_to_remove
+
+
+
+def add_items_to_link_table(item_ids, item_type, link_model, link_model_kwargs, db):
+    """
+    Adds items to a link table.
+
+    :param item_ids: IDs of the itemsto add
+    :param item_type: Type of the item
+    :param link_model: The link table model
+    :param link_model_kwargs: Additional keyword arguments.
+    :param db: DB session.
+    """
+    for item_id in item_ids:
+        key_name = 'skill_id' if item_type == 'skill' else 'tool_id'
+
+        if item_type == 'skill':
+            if not db.query(Skill).filter(Skill.skill_id == item_id).first():
+                raise HTTPException(status_code=404, detail=f"Item ID {item_id} not found")
+        else:
+            if not db.query(Tool).filter(Tool.tool_id == item_id).first():  
+                raise HTTPException(status_code=404, detail=f"Item ID {item_id} not found")
+           
+        link_instance = link_model(**link_model_kwargs, **{key_name: item_id})
+        db.add(link_instance)
+
+def remove_items_from_link_table(item_ids, item_type, link_model, link_model_kwargs, db):
+    """
+    Removes items from a link table.
+    """
+    for item_id in item_ids:
+        key_name = 'skill_id' if item_type == 'skill' else 'tool_id'
+        link_instance = db.query(link_model).filter_by(**link_model_kwargs, **{key_name: item_id}).first()
+        if link_instance:
+            db.delete(link_instance)
+
+
+
+def update_experience_item_link(experience_id, updated_item_ids, item_type, link_model, db):
+    
+    if item_type == 'skill':
+        current_item_ids = [link.skill_id for link in db.query(link_model).filter(link_model.experience_id == experience_id).all()]
+    else:  
+        current_item_ids = [link.tool_id for link in db.query(link_model).filter(link_model.experience_id == experience_id).all()]
+
+    items_to_add, items_to_remove = determine_items_to_remove_and_add(updated_item_ids, current_item_ids)
+    add_items_to_link_table(items_to_add, item_type, link_model, {'experience_id': experience_id}, db)
+    remove_items_from_link_table(items_to_remove, item_type, link_model, {'experience_id': experience_id}, db)
+
+def update_user_item_link(user_id, updated_item_ids, item_type, link_model, db):
+    
+    if item_type == 'skill':
+        current_item_ids = [link.skill_id for link in db.query(UserSkillLink).filter(UserSkillLink.user_id == user_id).all()]
+    else:  
+        current_item_ids = [link.tool_id for link in db.query(UserToolLink).filter(UserToolLink.user_id == user_id).all()]
+
+    items_to_add, items_to_remove = determine_items_to_remove_and_add(updated_item_ids, current_item_ids)
+
+    add_items_to_link_table(items_to_add, item_type, link_model, {'user_id': user_id}, db)
+    remove_items_from_link_table(items_to_remove, item_type, link_model, {'user_id': user_id}, db)

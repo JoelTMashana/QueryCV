@@ -11,6 +11,7 @@ from models import User
 from database import get_db
 
 
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -54,3 +55,5 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         )
     except JWTError:
         raise credentials_exception
+
+
