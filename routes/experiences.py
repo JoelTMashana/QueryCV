@@ -151,3 +151,26 @@ def update_skills_associated_with_user_and_experience(
     db.commit()
 
     return {"message": "Skills associated with experience updated successfully"}
+
+
+@router.patch("/api/v1/experiences/{experience_id}/tools")
+def update_tools_associated_with_user_and_experience(
+    experience_id: int, 
+    updated_tools: ToolLink, 
+    db: Session = Depends(get_db), 
+    current_user: UserAuth = Depends(get_current_user)
+):
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience or db_experience.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
+
+    update_experience_item_link(experience_id, updated_tools.tool_ids, 'tool', ExperienceToolLink, db)
+
+    db.flush() 
+
+    updated_experience_tool_ids = [link.tool_id for link in db.query(ExperienceToolLink).filter(ExperienceToolLink.experience_id == experience_id).all()]
+    update_user_item_link(current_user.user_id, updated_experience_tool_ids, 'tool', UserToolLink, db)
+    
+    db.commit()
+
+    return {"message": "Tools associated with experience updated successfully"}
