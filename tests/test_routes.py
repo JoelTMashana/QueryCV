@@ -1,10 +1,12 @@
 from fastapi.testclient import TestClient
 from main import app  
-from models import User, Skill, UserSkillLink, Tool, UserToolLink, ExperienceToolLink, ExperienceSkillLink
-from schemas import UserSkills, UserTools, ToolLink, SkillLink, ToolCreate, SkillCreate
+from models import User, Skill, UserSkillLink, Tool, UserToolLink, ExperienceToolLink, ExperienceSkillLink, Experience
+from schemas import UserSkills, UserTools, ToolLink, SkillLink, ToolCreate, SkillCreate, ExperienceUpdate, UserAuth
 from routes.users import link_skills_to_user, link_tools_to_user
-from routes.experiences import link_tools_to_experience, link_skills_to_experience
+from routes.experiences import link_tools_to_experience, link_skills_to_experience, update_user_experience
 from routes.tools_and_skills import  create_tool, create_skill
+from security import create_access_token , get_current_user
+
 client = TestClient(app)
 
 def test_read_home():
@@ -105,3 +107,37 @@ def test_create_skill(test_db_session):
     db_skill = test_db_session.query(Skill).filter(Skill.skill_name == skill.skill_name).first()
     assert db_skill is not None
     assert db_skill.skill_name == skill.skill_name
+
+
+def test_update_user_experience(test_db_session, test_user, test_experience):
+    current_user = UserAuth(
+        user_id=test_user.user_id,
+        firstname=test_user.firstname,
+        lastname=test_user.lastname,
+        email=test_user.email
+    )
+
+    updated_experience_data = ExperienceUpdate(
+        position="New Position",
+        company="New Company",
+        industry="New Industry",
+        duration="New Duration",
+        description="New Description",
+        outcomes="New Outcomes"
+    )
+
+    update_user_experience(
+        experience_id=test_experience.experience_id,
+        updated_experience=updated_experience_data,
+        db=test_db_session,
+        current_user=current_user
+    )
+
+    db_experience = test_db_session.query(Experience).filter(Experience.experience_id == test_experience.experience_id).first()
+
+    assert db_experience.position == "New Position"
+    assert db_experience.company == "New Company"
+    assert db_experience.industry == "New Industry"
+    assert db_experience.duration == "New Duration"
+    assert db_experience.description == "New Description"
+    assert db_experience.outcomes == "New Outcomes"

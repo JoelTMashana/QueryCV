@@ -8,8 +8,13 @@ from security import create_access_token
 from passlib.context import CryptContext
 import os
 import logging
+from datetime import datetime, timedelta
+from jose import jwt
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 
 print(SECRET_KEY)
 if not SECRET_KEY:
@@ -236,16 +241,9 @@ def test_user(test_db_session):
 
 
 @pytest.fixture(scope="function")
-def test_experience(test_db_session):
+def test_experience(test_db_session, test_user):
 
-    plain_password = 'plainpassword'
-    hashed_password = pwd_context.hash(plain_password)
-    test_user = User(
-        firstname="Jack", 
-        lastname="Dimon", 
-        email="jack@example.com", 
-        hashed_password=f'{hashed_password}'
-    )
+ 
 
     test_db_session.add(test_user)
     test_db_session.commit()
