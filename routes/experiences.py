@@ -42,6 +42,8 @@ def get_user_experiences(
         work_experience_full_details.append(experience_detail)
     formatted_experiences = format_experiences_for_gpt(work_experience_full_details)
     print(formatted_experiences)
+    if not user_query:
+        return {'response': 'User did not enter a query'}
     gpt_response = query_gpt(formatted_experiences, user_query)
     return {"gpt_response": gpt_response}
 
