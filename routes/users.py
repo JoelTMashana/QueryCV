@@ -41,7 +41,6 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         return db_user
     except SQLAlchemyError as e:
         db.rollback()
-        # Log the error for debugging
         raise HTTPException(status_code=500, detail="Database error")
 
 
