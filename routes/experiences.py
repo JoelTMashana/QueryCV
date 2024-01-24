@@ -143,13 +143,6 @@ def update_skills_associated_with_user_and_experience(
 
     db.flush() # Sychronise
 
-    user_experience_ids = db.query(Experience.experience_id).filter(Experience.user_id == current_user.user_id).all()
-
-    # updated_experience_skill_ids = []
-    # for exp_id in user_experience_ids:
-    #     for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == exp_id.experience_id).all():
-    #         if link.skill_id not in updated_experience_skill_ids:
-    #             updated_experience_skill_ids.append(link.skill_id)
     updated_experience_skill_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'skill', db)           
     update_user_item_link(current_user.user_id, updated_experience_skill_ids, 'skill', UserSkillLink, db)    
     db.commit()
