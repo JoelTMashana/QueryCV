@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from models import  User, Skill, Tool, UserSkillLink, UserToolLink
+from models import  User
 from sqlalchemy.orm import Session
 
 def check_user_exits(user_id, db: Session):

@@ -14,7 +14,6 @@ from services import  (get_skills_related_to_experience,
                        aggregate_user_item_ids_across_all_experiences)
 from security import get_current_user 
 from schemas import UserAuth
-from typing import List
 
 router = APIRouter()
 

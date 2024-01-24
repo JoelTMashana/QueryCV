@@ -2,14 +2,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import  Base
-from initial_data import initialise_db
 from models import Experience, Skill, ExperienceSkillLink, User, Tool, ExperienceToolLink, UserToolLink, UserSkillLink
-from security import create_access_token
 from passlib.context import CryptContext
 import os
 import logging
-from datetime import datetime, timedelta
-from jose import jwt
+
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = "HS256"
