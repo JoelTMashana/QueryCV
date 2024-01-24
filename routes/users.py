@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, Skill, UserSkillLink, Tool, UserToolLink
-from schemas import UserRead, UserCreate, UserBase, UserLogin, UserAuth, UserSkills, UserTools
+from schemas import UserRead, UserCreate, UserBase, UserLogin, UserSkills, UserTools
 from passlib.context import CryptContext
-from security import verify_password, create_access_token, get_current_user
-from pydantic import BaseModel
+from security import verify_password, create_access_token
+
 
 router = APIRouter()
 

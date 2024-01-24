@@ -2,14 +2,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import  Base
-from initial_data import initialise_db
 from models import Experience, Skill, ExperienceSkillLink, User, Tool, ExperienceToolLink, UserToolLink, UserSkillLink
-from security import create_access_token
 from passlib.context import CryptContext
 import os
 import logging
-from datetime import datetime, timedelta
-from jose import jwt
+
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = "HS256"
@@ -25,7 +22,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 logging.basicConfig(level=logging.INFO)
-
 
 
 @pytest.fixture(scope="function")
@@ -49,9 +45,6 @@ def test_user(test_db_session):
 
 @pytest.fixture(scope="function")
 def test_experience(test_db_session, test_user):
-
- 
-
     test_db_session.add(test_user)
     test_db_session.commit()
     experience = Experience(
@@ -88,14 +81,8 @@ def test_db_session():
 
 
 @pytest.fixture(scope="function")
-def experience_with_skills(test_db_session):
-    user = User(
-        firstname="Jack", 
-        lastname="Dimon", 
-        email="jack@example.com", 
-        hashed_password="hashed_pwdwxwx"
-    )
-    test_db_session.add(user)
+def experience_with_skills(test_db_session, test_user):
+    test_db_session.add(test_user)
     test_db_session.commit()
 
     experience = Experience(
@@ -105,7 +92,7 @@ def experience_with_skills(test_db_session):
         duration="01/01/2020 - 01/01/2024",
         description="Developing and maintaining mobile applications.",
         outcomes="Improved system performance by 50%",
-        user_id=user.user_id  
+        user_id=test_user.user_id  
     )  
     test_db_session.add(experience)
     test_db_session.commit()
@@ -122,15 +109,9 @@ def experience_with_skills(test_db_session):
 
 
 @pytest.fixture(scope="function")
-def experience_with_tools(test_db_session):
-    user = User(
-        firstname="Jack",
-        lastname="Dimon",
-        email="jack@example.com",
-        hashed_password="hashed_pwd"
-    )
+def experience_with_tools(test_db_session, test_user):
 
-    test_db_session.add(user)
+    test_db_session.add(test_user)
     test_db_session.commit()
 
     experience = Experience(
@@ -140,7 +121,7 @@ def experience_with_tools(test_db_session):
         duration="01/01/2020 - 01/01/2024",
         description="Developing and maintaining mobile applications.",
         outcomes="Improved system performance by 50%",
-        user_id=user.user_id  
+        user_id=test_user.user_id  
     )
 
     test_db_session.add(experience)
@@ -158,14 +139,8 @@ def experience_with_tools(test_db_session):
 
 
 @pytest.fixture(scope="function")
-def experience_with_multiple_skills(test_db_session):
-    user = User(
-        firstname="Jack", 
-        lastname="Dimon", 
-        email="jack@example.com", 
-        hashed_password="hashed_pwd"
-    )
-    test_db_session.add(user)
+def experience_with_multiple_skills(test_db_session, test_user):
+    test_db_session.add(test_user)
     test_db_session.commit()
 
     experience = Experience(
@@ -175,7 +150,7 @@ def experience_with_multiple_skills(test_db_session):
         duration="01/01/2020 - 01/01/2024",
         description="Developing and maintaining mobile applications.",
         outcomes="Improved system performance by 50%",
-        user_id=user.user_id 
+        user_id=test_user.user_id 
     )  
     test_db_session.add(experience)
     test_db_session.commit()
@@ -199,14 +174,8 @@ def experience_with_multiple_skills(test_db_session):
 
 
 @pytest.fixture(scope="function")
-def experience_with_multiple_tools(test_db_session):
-    user = User(
-        firstname="Jack", 
-        lastname="Dimon", 
-        email="jack@example.com", 
-        hashed_password="hashed_pwd"
-    )
-    test_db_session.add(user)
+def experience_with_multiple_tools(test_db_session, test_user):
+    test_db_session.add(test_user)
     test_db_session.commit()
 
     experience = Experience(
@@ -216,7 +185,7 @@ def experience_with_multiple_tools(test_db_session):
         duration="01/01/2020 - 01/01/2024",
         description="Developing and maintaining mobile applications.",
         outcomes="Improved system performance by 50%",
-        user_id=user.user_id 
+        user_id=test_user.user_id 
     )  
     test_db_session.add(experience)
     test_db_session.commit()
@@ -239,14 +208,8 @@ def experience_with_multiple_tools(test_db_session):
 
 
 @pytest.fixture(scope="function")
-def experience_with_zero_skills_and_tools(test_db_session):
-    user = User(
-        firstname="Jack", 
-        lastname="Dimon", 
-        email="jack@example.com", 
-        hashed_password="hashed_pwd"
-    )
-    test_db_session.add(user)
+def experience_with_zero_skills_and_tools(test_db_session, test_user):
+    test_db_session.add(test_user)
     test_db_session.commit()
 
     experience = Experience(
@@ -256,7 +219,7 @@ def experience_with_zero_skills_and_tools(test_db_session):
         duration="01/01/2020 - 01/01/2024",
         description="Developing and maintaining mobile applications.",
         outcomes="Improved system performance by 50%",
-        user_id=user.user_id 
+        user_id=test_user.user_id 
     )  
     test_db_session.add(experience)
     test_db_session.commit()

@@ -1,13 +1,19 @@
 from fastapi import Depends, APIRouter, Query, HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink, UserToolLink
 from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
 from helpers import check_user_exits
-from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt, update_user_item_link, update_experience_item_link, aggregate_user_item_ids_across_all_experiences
+from services import  (get_skills_related_to_experience, 
+                       get_tools_related_to_experience, 
+                       format_experiences_for_gpt, 
+                       query_gpt, 
+                       update_user_item_link, 
+                       update_experience_item_link, 
+                       aggregate_user_item_ids_across_all_experiences)
 from security import get_current_user 
 from schemas import UserAuth
-from typing import List
 
 router = APIRouter()
 
@@ -133,21 +139,25 @@ def update_skills_associated_with_user_and_experience(
     db: Session = Depends(get_db), 
     current_user: UserAuth = Depends(get_current_user)
     ):
-    
-    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
-    if not db_experience or db_experience.user_id != current_user.user_id:
-        raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
 
-    # Update the Experience skill table to reflect changes
-    update_experience_item_link(experience_id, updated_skills.skill_ids, 'skill', ExperienceSkillLink, db)
+    try:         
+        db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+        if not db_experience or db_experience.user_id != current_user.user_id:
+            raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
 
-    db.flush() # Sychronise
+        # Update the Experience skill table to reflect changes
+        update_experience_item_link(experience_id, updated_skills.skill_ids, 'skill', ExperienceSkillLink, db)
 
-    updated_experience_skill_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'skill', db)           
-    update_user_item_link(current_user.user_id, updated_experience_skill_ids, 'skill', UserSkillLink, db)    
-    db.commit()
+        db.flush() # Sychronise
 
-    return {"message": "Skills associated with experience updated successfully"}
+        updated_experience_skill_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'skill', db)           
+        update_user_item_link(current_user.user_id, updated_experience_skill_ids, 'skill', UserSkillLink, db)    
+        db.commit()
+        return {"message": "Skills associated with experience updated successfully"}
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @router.patch("/api/v1/experiences/{experience_id}/tools")
@@ -158,17 +168,48 @@ def update_tools_associated_with_user_and_experience(
     current_user: UserAuth = Depends(get_current_user)
 ):
 
-    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
-    if not db_experience or db_experience.user_id != current_user.user_id:
-        raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
+    try:
+        db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+        if not db_experience or db_experience.user_id != current_user.user_id:
+            raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
 
-    update_experience_item_link(experience_id, updated_tools.tool_ids, 'tool', ExperienceToolLink, db)
-    
-    db.flush() 
+        update_experience_item_link(experience_id, updated_tools.tool_ids, 'tool', ExperienceToolLink, db)
+        db.flush() 
+        updated_experience_tool_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'tool', db) 
+        update_user_item_link(current_user.user_id, updated_experience_tool_ids, 'tool', UserToolLink, db)
+        db.commit()
+        return {"message": "Tools associated with experience updated successfully"}
 
-    updated_experience_tool_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'tool', db) 
-    update_user_item_link(current_user.user_id, updated_experience_tool_ids, 'tool', UserToolLink, db)
-    
-    db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-    return {"message": "Tools associated with experience updated successfully"}
+
+
+
+
+@router.delete("/api/v1/experiences/{experience_id}")
+def delete_user_experience(experience_id: int, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    try:
+        db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+        if not db_experience or db_experience.user_id != current_user.user_id:
+            raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
+
+        db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).delete()
+        db.query(ExperienceToolLink).filter(ExperienceToolLink.experience_id == experience_id).delete()
+
+        db.delete(db_experience)
+
+        updated_experience_skill_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'skill', db)           
+        update_user_item_link(current_user.user_id, updated_experience_skill_ids, 'skill', UserSkillLink, db) 
+
+        updated_experience_tool_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'tool', db) 
+        update_user_item_link(current_user.user_id, updated_experience_tool_ids, 'tool', UserToolLink, db)
+
+        db.commit()
+        return {"message": "Experience and associated skills and tools deleted successfully"}
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
