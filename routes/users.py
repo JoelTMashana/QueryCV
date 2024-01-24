@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, Skill, UserSkillLink, Tool, UserToolLink
@@ -18,25 +19,31 @@ async def read_users(db: Session = Depends(get_db)):
     return users
 
 
+
 @router.post("/api/v1/users/register_user", response_model=UserBase)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    try:
+        db_user = db.query(User).filter(User.email == user.email).first()
+        if db_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed_password = pwd_context.hash(user.password)
+        hashed_password = pwd_context.hash(user.password)
+        db_user = User(
+            firstname=user.firstname,
+            lastname=user.lastname,
+            email=user.email,
+            hashed_password=hashed_password
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
 
-    db_user = User(
-        firstname=user.firstname,
-        lastname=user.lastname,
-        email=user.email,
-        hashed_password=hashed_password
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+        return db_user
+    except SQLAlchemyError as e:
+        db.rollback()
+        # Log the error for debugging
+        raise HTTPException(status_code=500, detail="Database error")
 
-    return db_user
 
 def login(user_credentials: UserLogin, db: Session):
     user = db.query(User).filter(User.email == user_credentials.email).first()
