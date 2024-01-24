@@ -8,7 +8,7 @@ from schemas import ToolCreate, ToolRead, SkillRead, SkillCreate
 router = APIRouter()
 
 @router.post("/api/v1/tools", response_model=ToolRead)
-def create_tool(tool: ToolCreate, db: Session = Depends(get_db)):
+def create_tool(tool: ToolCreate, db: Session = Depends(get_db)): # Admin
     try:
         db_tool = Tool(**tool.dict())
         db.add(db_tool)
@@ -20,7 +20,7 @@ def create_tool(tool: ToolCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Database error")
 
 @router.post("/api/v1/skills", response_model=SkillRead)
-def create_skill(skill: SkillCreate, db: Session = Depends(get_db)):
+def create_skill(skill: SkillCreate, db: Session = Depends(get_db)): # Admin
     try:
         db_skill = Skill(**skill.dict()) 
         db.add(db_skill)
