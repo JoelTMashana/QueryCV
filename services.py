@@ -163,8 +163,11 @@ def update_experience_item_link(experience_id, updated_item_ids, item_type, link
         current_item_ids = [link.tool_id for link in db.query(link_model).filter(link_model.experience_id == experience_id).all()]
 
     items_to_add, items_to_remove = determine_items_to_remove_and_add(updated_item_ids, current_item_ids)
+    
     add_items_to_link_table(items_to_add, item_type, link_model, {'experience_id': experience_id}, db)
     remove_items_from_link_table(items_to_remove, item_type, link_model, {'experience_id': experience_id}, db)
+
+
 
 def update_user_item_link(user_id, updated_item_ids, item_type, link_model, db):
     

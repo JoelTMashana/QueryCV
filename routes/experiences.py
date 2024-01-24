@@ -164,11 +164,22 @@ def update_tools_associated_with_user_and_experience(
         raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
 
     update_experience_item_link(experience_id, updated_tools.tool_ids, 'tool', ExperienceToolLink, db)
+    
 
     db.flush() 
 
-    updated_experience_tool_ids = [link.tool_id for link in db.query(ExperienceToolLink).filter(ExperienceToolLink.experience_id == experience_id).all()]
+    user_experience_ids = db.query(Experience.experience_id).filter(Experience.user_id == current_user.user_id).all()
+    print('user experience ids: ', user_experience_ids)
+
+    updated_experience_tool_ids = []
+    for exp_id in user_experience_ids:
+        for link in db.query(ExperienceToolLink).filter(ExperienceToolLink.experience_id == exp_id.experience_id).all():
+            updated_experience_tool_ids.append(link.tool_id)
+
+
+    print('Updated tool experice tools ids, beofre update item', updated_experience_tool_ids)
     update_user_item_link(current_user.user_id, updated_experience_tool_ids, 'tool', UserToolLink, db)
+    
     
     db.commit()
 
