@@ -143,8 +143,14 @@ def update_skills_associated_with_user_and_experience(
 
     db.flush() # Sychronise
 
-    # Update the User skill link table to reflect changes
-    updated_experience_skill_ids = [link.skill_id for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_id).all()]
+    user_experience_ids = db.query(Experience.experience_id).filter(Experience.user_id == current_user.user_id).all()
+
+    updated_experience_skill_ids = []
+    for exp_id in user_experience_ids:
+        for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == exp_id.experience_id).all():
+            if link.skill_id not in updated_experience_skill_ids:
+                updated_experience_skill_ids.append(link.skill_id)
+                
     update_user_item_link(current_user.user_id, updated_experience_skill_ids, 'skill', UserSkillLink, db)    
     db.commit()
 
@@ -169,7 +175,6 @@ def update_tools_associated_with_user_and_experience(
     db.flush() 
 
     user_experience_ids = db.query(Experience.experience_id).filter(Experience.user_id == current_user.user_id).all()
-    print('user experience ids: ', user_experience_ids)
 
     updated_experience_tool_ids = []
     for exp_id in user_experience_ids:
@@ -177,9 +182,7 @@ def update_tools_associated_with_user_and_experience(
             updated_experience_tool_ids.append(link.tool_id)
 
 
-    print('Updated tool experice tools ids, beofre update item', updated_experience_tool_ids)
     update_user_item_link(current_user.user_id, updated_experience_tool_ids, 'tool', UserToolLink, db)
-    
     
     db.commit()
 
