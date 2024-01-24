@@ -3,7 +3,7 @@ import openai
 import os
 from dotenv import load_dotenv
 from fastapi import HTTPException
-from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink
+from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink, Experience
 from schemas import SkillRead, ToolRead
 from sqlalchemy.orm import Session
 from typing import List
@@ -180,3 +180,19 @@ def update_user_item_link(user_id, updated_item_ids, item_type, link_model, db):
 
     add_items_to_link_table(items_to_add, item_type, link_model, {'user_id': user_id}, db)
     remove_items_from_link_table(items_to_remove, item_type, link_model, {'user_id': user_id}, db)
+
+
+def aggregate_user_item_ids_across_all_experiences(current_user, item_type, db,):
+    user_experience_ids = db.query(Experience.experience_id).filter(Experience.user_id == current_user.user_id).all()
+    
+    updated_experience_item_ids = []
+    for exp_id in user_experience_ids:
+        if item_type == 'skill': 
+            for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == exp_id.experience_id).all():
+                if link.skill_id not in updated_experience_item_ids:
+                    updated_experience_item_ids.append(link.skill_id)
+        else:
+            for link in db.query(ExperienceToolLink).filter(ExperienceToolLink.experience_id == exp_id.experience_id).all():
+                if link.tool_id not in updated_experience_item_ids:
+                    updated_experience_item_ids.append(link.tool_id)
+    return updated_experience_item_ids

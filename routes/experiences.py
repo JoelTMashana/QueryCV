@@ -4,7 +4,7 @@ from database import get_db
 from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink, UserToolLink
 from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
 from helpers import check_user_exits
-from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt, update_user_item_link, update_experience_item_link
+from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt, update_user_item_link, update_experience_item_link, aggregate_user_item_ids_across_all_experiences
 from security import get_current_user 
 from schemas import UserAuth
 from typing import List
@@ -145,12 +145,12 @@ def update_skills_associated_with_user_and_experience(
 
     user_experience_ids = db.query(Experience.experience_id).filter(Experience.user_id == current_user.user_id).all()
 
-    updated_experience_skill_ids = []
-    for exp_id in user_experience_ids:
-        for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == exp_id.experience_id).all():
-            if link.skill_id not in updated_experience_skill_ids:
-                updated_experience_skill_ids.append(link.skill_id)
-                
+    # updated_experience_skill_ids = []
+    # for exp_id in user_experience_ids:
+    #     for link in db.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == exp_id.experience_id).all():
+    #         if link.skill_id not in updated_experience_skill_ids:
+    #             updated_experience_skill_ids.append(link.skill_id)
+    updated_experience_skill_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'skill', db)           
     update_user_item_link(current_user.user_id, updated_experience_skill_ids, 'skill', UserSkillLink, db)    
     db.commit()
 
@@ -171,17 +171,9 @@ def update_tools_associated_with_user_and_experience(
 
     update_experience_item_link(experience_id, updated_tools.tool_ids, 'tool', ExperienceToolLink, db)
     
-
     db.flush() 
 
-    user_experience_ids = db.query(Experience.experience_id).filter(Experience.user_id == current_user.user_id).all()
-
-    updated_experience_tool_ids = []
-    for exp_id in user_experience_ids:
-        for link in db.query(ExperienceToolLink).filter(ExperienceToolLink.experience_id == exp_id.experience_id).all():
-            updated_experience_tool_ids.append(link.tool_id)
-
-
+    updated_experience_tool_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'tool', db) 
     update_user_item_link(current_user.user_id, updated_experience_tool_ids, 'tool', UserToolLink, db)
     
     db.commit()
