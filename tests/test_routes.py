@@ -1,11 +1,14 @@
 from fastapi.testclient import TestClient
 from main import app  
-from models import User, Skill, UserSkillLink, Tool, UserToolLink, ExperienceToolLink, ExperienceSkillLink, Experience
+from models import Skill, UserSkillLink, Tool, UserToolLink, ExperienceToolLink, ExperienceSkillLink, Experience
 from schemas import UserSkills, UserTools, ToolLink, SkillLink, ToolCreate, SkillCreate, ExperienceUpdate, UserAuth
 from routes.users import link_skills_to_user, link_tools_to_user
-from routes.experiences import link_tools_to_experience, link_skills_to_experience, update_user_experience, update_skills_associated_with_user_and_experience, delete_user_experience
+from routes.experiences import (link_tools_to_experience, 
+                                link_skills_to_experience, 
+                                update_user_experience, 
+                                delete_user_experience)
 from routes.tools_and_skills import  create_tool, create_skill
-from security import create_access_token , get_current_user
+
 
 client = TestClient(app)
 
