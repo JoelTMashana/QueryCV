@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import List
+from typing import Optional
 
 class UserBase(BaseModel):
     firstname: str
@@ -67,7 +68,13 @@ class ExperienceRead(ExperienceBase):
         orm_mode = True
 
 
-
+class ExperienceUpdate(BaseModel):
+    position: Optional[str]= None
+    company: Optional[str] = None
+    industry: Optional[str] = None
+    duration: Optional[str] = None
+    description: Optional[str] = None
+    outcomes: Optional[str] = None
 
 
 class SkillLink(BaseModel):

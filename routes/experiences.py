@@ -1,10 +1,10 @@
 from fastapi import Depends, APIRouter, Query, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink
-from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink
+from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink, UserToolLink
+from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
 from helpers import check_user_exits
-from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt
+from services import  get_skills_related_to_experience, get_tools_related_to_experience, format_experiences_for_gpt, query_gpt, update_user_item_link, update_experience_item_link, aggregate_user_item_ids_across_all_experiences
 from security import get_current_user 
 from schemas import UserAuth
 from typing import List
@@ -42,10 +42,10 @@ def get_user_experiences(
         work_experience_full_details.append(experience_detail)
     formatted_experiences = format_experiences_for_gpt(work_experience_full_details)
     print(formatted_experiences)
+    if not user_query:
+        return {'response': 'User did not enter a query'}
     gpt_response = query_gpt(formatted_experiences, user_query)
     return {"gpt_response": gpt_response}
-
-
 
 
 @router.post("/api/v1/users/{user_id}/experiences", response_model=ExperienceRead)
@@ -61,7 +61,6 @@ def create_experience_for_user(user_id: int, experience: ExperienceCreate, db: S
     db.refresh(db_experience)
 
     return db_experience
-
 
 
 
@@ -108,3 +107,68 @@ def link_tools_to_experience(experience_id: int, tools_selected_by_user: ToolLin
     return {"message": "Tools linked to experience successfully"}
 
 
+
+@router.patch("/api/v1/experiences/{experience_id}")
+def update_user_experience(experience_id: int, updated_experience: ExperienceUpdate, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience:
+        raise HTTPException(status_code=404, detail="Experience not found")
+
+    if db_experience.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorised to update this experience")
+
+    for attritube, value in vars(updated_experience).items():
+        if value is not None:
+            setattr(db_experience, attritube, value)
+
+    db.commit()
+    return db_experience
+
+
+
+@router.patch("/api/v1/experiences/{experience_id}/skills")
+def update_skills_associated_with_user_and_experience(
+    experience_id: int, 
+    updated_skills: SkillLink, 
+    db: Session = Depends(get_db), 
+    current_user: UserAuth = Depends(get_current_user)
+    ):
+    
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience or db_experience.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
+
+    # Update the Experience skill table to reflect changes
+    update_experience_item_link(experience_id, updated_skills.skill_ids, 'skill', ExperienceSkillLink, db)
+
+    db.flush() # Sychronise
+
+    updated_experience_skill_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'skill', db)           
+    update_user_item_link(current_user.user_id, updated_experience_skill_ids, 'skill', UserSkillLink, db)    
+    db.commit()
+
+    return {"message": "Skills associated with experience updated successfully"}
+
+
+@router.patch("/api/v1/experiences/{experience_id}/tools")
+def update_tools_associated_with_user_and_experience(
+    experience_id: int, 
+    updated_tools: ToolLink, 
+    db: Session = Depends(get_db), 
+    current_user: UserAuth = Depends(get_current_user)
+):
+
+    db_experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    if not db_experience or db_experience.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Experience not found or not owned by user")
+
+    update_experience_item_link(experience_id, updated_tools.tool_ids, 'tool', ExperienceToolLink, db)
+    
+    db.flush() 
+
+    updated_experience_tool_ids = aggregate_user_item_ids_across_all_experiences(current_user, 'tool', db) 
+    update_user_item_link(current_user.user_id, updated_experience_tool_ids, 'tool', UserToolLink, db)
+    
+    db.commit()
+
+    return {"message": "Tools associated with experience updated successfully"}

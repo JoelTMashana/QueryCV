@@ -8,8 +8,13 @@ from security import create_access_token
 from passlib.context import CryptContext
 import os
 import logging
+from datetime import datetime, timedelta
+from jose import jwt
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 
 print(SECRET_KEY)
 if not SECRET_KEY:
@@ -20,6 +25,49 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 logging.basicConfig(level=logging.INFO)
+
+
+
+@pytest.fixture(scope="function")
+def test_user(test_db_session):
+    logging.info("creating the user fixure")
+
+    plain_password = 'plainpassword'
+    hashed_password = pwd_context.hash(plain_password)
+    test_user = User(
+        firstname="Jack", 
+        lastname="Dimon", 
+        email="jack@example.com", 
+        hashed_password=f'{hashed_password}'
+    )
+
+    test_db_session.add(test_user)
+    test_db_session.commit()
+    logging.info("commited user fixture to test_db_session")
+    return test_user
+
+
+@pytest.fixture(scope="function")
+def test_experience(test_db_session, test_user):
+
+ 
+
+    test_db_session.add(test_user)
+    test_db_session.commit()
+    experience = Experience(
+        position="Software Engineer",
+        company="SoftTech",
+        industry="Information Technology",
+        duration="01/01/2020 - 01/01/2024",
+        description="Developing and maintaining mobile applications.",
+        outcomes="Improved system performance by 50%",
+        user_id=test_user.user_id 
+    )  
+    test_db_session.add(experience)
+    test_db_session.commit()
+    return experience
+
+
 
 
 @pytest.fixture(scope="function")
@@ -215,50 +263,4 @@ def experience_with_zero_skills_and_tools(test_db_session):
 
     return experience.experience_id
 
-
-@pytest.fixture(scope="function")
-def test_user(test_db_session):
-    logging.info("creating the user fixure")
-
-    plain_password = 'plainpassword'
-    hashed_password = pwd_context.hash(plain_password)
-    test_user = User(
-        firstname="Jack", 
-        lastname="Dimon", 
-        email="jack@example.com", 
-        hashed_password=f'{hashed_password}'
-    )
-
-    test_db_session.add(test_user)
-    test_db_session.commit()
-    logging.info("commited user fixture to test_db_session")
-    return test_user
-
-
-@pytest.fixture(scope="function")
-def test_experience(test_db_session):
-
-    plain_password = 'plainpassword'
-    hashed_password = pwd_context.hash(plain_password)
-    test_user = User(
-        firstname="Jack", 
-        lastname="Dimon", 
-        email="jack@example.com", 
-        hashed_password=f'{hashed_password}'
-    )
-
-    test_db_session.add(test_user)
-    test_db_session.commit()
-    experience = Experience(
-        position="Software Engineer",
-        company="SoftTech",
-        industry="Information Technology",
-        duration="01/01/2020 - 01/01/2024",
-        description="Developing and maintaining mobile applications.",
-        outcomes="Improved system performance by 50%",
-        user_id=test_user.user_id 
-    )  
-    test_db_session.add(experience)
-    test_db_session.commit()
-    return experience
 
