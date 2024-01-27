@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, Skill, UserSkillLink, Tool, UserToolLink
-from schemas import UserRead, UserCreate, UserBase, UserLogin, UserSkills, UserTools
+from schemas import UserRead, UserCreate, UserBase, UserLogin, UserSkills, UserTools, TokenResponse
 from passlib.context import CryptContext
 from security import verify_password, create_access_token
 
@@ -20,7 +20,7 @@ async def read_users(db: Session = Depends(get_db)):
 
 
 
-@router.post("/api/v1/users/register_user", response_model=UserBase)
+@router.post("/api/v1/users/register_user", response_model=TokenResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     try:
         db_user = db.query(User).filter(User.email == user.email).first()
@@ -38,7 +38,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_user)
 
-        return db_user
+        access_token = create_access_token(data={"sub": db_user.email})
+        return {"access_token": access_token, "token_type": "bearer"}
     except SQLAlchemyError as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Database error")
