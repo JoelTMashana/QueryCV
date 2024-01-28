@@ -68,6 +68,10 @@ def login(user_credentials: UserLogin, response: Response, db: Session):
 
     return {"message": "User logged in successfully."}
 
+@router.post("/api/v1/logout")
+def logout(response: Response):
+    response.delete_cookie(key="access_token")  
+    return {"message": "User logged out successfully."}
 
 @router.post("/api/v1/users/{user_id}/skills")
 def link_skills_to_user(user_id: int, skills_selected_by_user: UserSkills, db: Session = Depends(get_db)):
