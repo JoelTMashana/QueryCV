@@ -49,13 +49,17 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
         raise HTTPException(status_code=500, detail="Database error")
 
 
-def login(user_credentials: UserLogin,  response: Response,  db: Session):
+@router.post("/api/v1/login")
+def login_route(user_credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
+    return login(user_credentials, response, db)
+
+def login(user_credentials: UserLogin, response: Response, db: Session):
     user = db.query(User).filter(User.email == user_credentials.email).first()
 
     if not user or not verify_password(user_credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=401,
-            detail="Incorrect email address or password",
+            detail="Incorrect email address or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -63,12 +67,6 @@ def login(user_credentials: UserLogin,  response: Response,  db: Session):
     response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Lax')
 
     return {"message": "User logged in successfully."}
-
-
-@router.post("/api/v1/login")
-def login_route(user_credentials: UserLogin, db: Session = Depends(get_db)):
-    return login(user_credentials, db)
-
 
 
 @router.post("/api/v1/users/{user_id}/skills")
