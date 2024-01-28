@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from database import get_db
@@ -20,8 +20,8 @@ async def read_users(db: Session = Depends(get_db)):
 
 
 
-@router.post("/api/v1/users/register_user", response_model=TokenResponse)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
+@router.post("/api/v1/users/register_user")
+def create_user(user: UserCreate,  response: Response, db: Session = Depends(get_db)):
     try:
         db_user = db.query(User).filter(User.email == user.email).first()
         if db_user:
@@ -39,13 +39,17 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         db.refresh(db_user)
 
         access_token = create_access_token(data={"sub": db_user.email})
-        return {"access_token": access_token, "token_type": "bearer"}
+        
+        # HttpOnly cookie
+        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Lax')
+
+        return {"message": "User registered successfully."}
     except SQLAlchemyError as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Database error")
 
 
-def login(user_credentials: UserLogin, db: Session):
+def login(user_credentials: UserLogin,  response: Response,  db: Session):
     user = db.query(User).filter(User.email == user_credentials.email).first()
 
     if not user or not verify_password(user_credentials.password, user.hashed_password):
@@ -56,7 +60,9 @@ def login(user_credentials: UserLogin, db: Session):
         )
 
     access_token = create_access_token(data={"sub": str(user.user_id)})
-    return {"access_token": access_token, "token_type": "bearer"}
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Lax')
+
+    return {"message": "User logged in successfully."}
 
 
 @router.post("/api/v1/login")
