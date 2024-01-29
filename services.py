@@ -61,12 +61,6 @@ def format_pre_registration_experiences_for_gpt(experiences: List[Experience]) -
         formatted += f"Position: {experience.position}, Company: {experience.company}, Description: {experience.description}\n"
     return formatted
 
-async def query_gpt(formatted_experiences: str, user_query: str) -> str:
-    # Implement logic to query GPT with the formatted experiences and user query
-    # This might involve sending a request to the GPT API and returning the response
-    response = "GPT response here"  # Placeholder for actual GPT response
-    return response
-
 
 def query_gpt(formatted_experiences, user_query):
     """
