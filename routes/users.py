@@ -41,7 +41,7 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
         access_token = create_access_token(data={"sub": db_user.email})
         
         # HttpOnly cookie
-        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Lax')
+        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict')
 
         return {"message": "User registered successfully."}
     except SQLAlchemyError as e:
@@ -64,7 +64,7 @@ def login(user_credentials: UserLogin, response: Response, db: Session):
         )
 
     access_token = create_access_token(data={"sub": str(user.user_id)})
-    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Lax')
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict')
 
     return {"message": "User logged in successfully."}
 
