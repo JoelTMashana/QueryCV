@@ -3,11 +3,12 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink, UserToolLink
-from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate
+from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate, UserQueryPreRegistration
 from helpers import check_user_exits
 from services import  (get_skills_related_to_experience, 
                        get_tools_related_to_experience, 
                        format_experiences_for_gpt, 
+                       format_pre_registration_experiences_for_gpt,
                        query_gpt, 
                        update_user_item_link, 
                        update_experience_item_link, 
@@ -52,6 +53,20 @@ def get_user_experiences(
         return {'response': 'User did not enter a query'}
     gpt_response = query_gpt(formatted_experiences, user_query)
     return {"gpt_response": gpt_response}
+
+
+
+@router.post("/api/v1/users/experiences")
+def query_user_pre_registration_experiences(user_query: UserQueryPreRegistration):
+    if not user_query.query:
+        return {'response': 'User did not enter a query'}
+
+    formatted_experiences = format_pre_registration_experiences_for_gpt(user_query.experiences)
+    print(formatted_experiences)
+
+    gpt_response = query_gpt(formatted_experiences, user_query.query)
+    return {"gpt_response": gpt_response}
+
 
 
 @router.post("/api/v1/users/{user_id}/experiences", response_model=ExperienceRead)

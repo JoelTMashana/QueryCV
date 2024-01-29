@@ -7,6 +7,7 @@ from models import User, Skill, UserSkillLink, Tool, UserToolLink
 from schemas import UserRead, UserCreate, UserBase, UserLogin, UserSkills, UserTools, TokenResponse
 from passlib.context import CryptContext
 from security import verify_password, create_access_token
+import uuid
 
 
 router = APIRouter()
@@ -49,9 +50,25 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
         raise HTTPException(status_code=500, detail="Database error")
 
 
+@router.post("/api/v1/users/temporary-token")
+def create_temporary_token_for_onboarding_user(response: Response):
+    try:
+        anonymous_user_id = str(uuid.uuid4())
+
+        access_token = create_access_token(data={"sub": anonymous_user_id})
+
+        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict', max_age=1800)  
+
+        return {"message": "Temporary session initialised."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/api/v1/login")
 def login_route(user_credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
     return login(user_credentials, response, db)
+
+
 
 def login(user_credentials: UserLogin, response: Response, db: Session):
     user = db.query(User).filter(User.email == user_credentials.email).first()

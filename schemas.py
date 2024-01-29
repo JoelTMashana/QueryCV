@@ -94,3 +94,13 @@ class UserTools(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+
+
+class PreRegistrationExperience(BaseModel):
+    position: str
+    company: str
+    description: str
+
+class UserQueryPreRegistration(BaseModel):
+    query: str
+    experiences: List[PreRegistrationExperience]
