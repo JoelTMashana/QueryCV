@@ -65,6 +65,11 @@ def query_user_pre_registration_experiences(user_query: UserQueryPreRegistration
     print(formatted_experiences)
 
     gpt_response = query_gpt(formatted_experiences, user_query.query)
+    
+    if "error" in gpt_response:
+        print(gpt_response["details"])
+        raise HTTPException(status_code=503, detail=gpt_response["error"])
+
     return {"gpt_response": gpt_response}
 
 
