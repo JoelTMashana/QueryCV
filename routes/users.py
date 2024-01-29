@@ -44,7 +44,14 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
         # HttpOnly cookie
         response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict')
 
-        return {"message": "User registered successfully."}
+        return {
+            "message": "User registered successfully.",
+            "user_details": {
+                "firstname": db_user.firstname,
+                "lastname": db_user.lastname,
+                "email": db_user.email
+            }
+        }
     except SQLAlchemyError as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Database error")
@@ -83,7 +90,14 @@ def login(user_credentials: UserLogin, response: Response, db: Session):
     access_token = create_access_token(data={"sub": str(user.user_id)})
     response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict')
 
-    return {"message": "User logged in successfully."}
+    return {
+        "message": "User logged in successfully.",
+        "user": {
+            "firstname": user.firstname,
+            "lastname": user.lastname,
+            "email": user.email
+        }
+    }
 
 @router.post("/api/v1/logout")
 def logout(response: Response):
