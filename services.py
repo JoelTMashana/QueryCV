@@ -83,7 +83,7 @@ def query_gpt(formatted_experiences, user_query):
         return gpt_response
     except Exception as e:
         print(f"An error occurred: {e}")
-        return None
+        return  {"error": "Failed to get a response from GPT", "details": str(e)}
 
 
 
