@@ -1,12 +1,13 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, Skill, UserSkillLink, Tool, UserToolLink
-from schemas import UserRead, UserCreate, UserBase, UserLogin, UserSkills, UserTools
+from schemas import UserRead, UserCreate, UserBase, UserLogin, UserSkills, UserTools, TokenResponse
 from passlib.context import CryptContext
 from security import verify_password, create_access_token
+import uuid
 
 
 router = APIRouter()
@@ -20,12 +21,12 @@ async def read_users(db: Session = Depends(get_db)):
 
 
 
-@router.post("/api/v1/users/register_user", response_model=UserBase)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
+@router.post("/api/v1/users/register_user")
+def create_user(user: UserCreate,  response: Response, db: Session = Depends(get_db)):
     try:
         db_user = db.query(User).filter(User.email == user.email).first()
         if db_user:
-            raise HTTPException(status_code=400, detail="Email already registered")
+            raise HTTPException(status_code=400, detail="Email already exists.")
 
         hashed_password = pwd_context.hash(user.password)
         db_user = User(
@@ -38,31 +39,56 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_user)
 
-        return db_user
+        access_token = create_access_token(data={"sub": db_user.email})
+        
+        # HttpOnly cookie
+        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict')
+
+        return {"message": "User registered successfully."}
     except SQLAlchemyError as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Database error")
 
 
-def login(user_credentials: UserLogin, db: Session):
+@router.post("/api/v1/users/temporary-token")
+def create_temporary_token_for_onboarding_user(response: Response):
+    try:
+        anonymous_user_id = str(uuid.uuid4())
+
+        access_token = create_access_token(data={"sub": anonymous_user_id})
+
+        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict', max_age=1800)  
+
+        return {"message": "Temporary session initialised."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/v1/login")
+def login_route(user_credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
+    return login(user_credentials, response, db)
+
+
+
+def login(user_credentials: UserLogin, response: Response, db: Session):
     user = db.query(User).filter(User.email == user_credentials.email).first()
 
     if not user or not verify_password(user_credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=401,
-            detail="Incorrect email address or password",
+            detail="Incorrect email address or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     access_token = create_access_token(data={"sub": str(user.user_id)})
-    return {"access_token": access_token, "token_type": "bearer"}
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict')
 
+    return {"message": "User logged in successfully."}
 
-@router.post("/api/v1/login")
-def login_route(user_credentials: UserLogin, db: Session = Depends(get_db)):
-    return login(user_credentials, db)
-
-
+@router.post("/api/v1/logout")
+def logout(response: Response):
+    response.delete_cookie(key="access_token")  
+    return {"message": "User logged out successfully."}
 
 @router.post("/api/v1/users/{user_id}/skills")
 def link_skills_to_user(user_id: int, skills_selected_by_user: UserSkills, db: Session = Depends(get_db)):

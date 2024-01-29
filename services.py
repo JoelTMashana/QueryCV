@@ -55,6 +55,13 @@ def format_experiences_for_gpt(experiences) -> str:
         return "Apologise to the user, an error has occured"
 
 
+def format_pre_registration_experiences_for_gpt(experiences: List[Experience]) -> str:
+    formatted = ""
+    for experience in experiences:
+        formatted += f"Position: {experience.position}, Company: {experience.company}, Description: {experience.description}\n"
+    return formatted
+
+
 def query_gpt(formatted_experiences, user_query):
     """
     Sends a query to the OpenAI GPT API using the updated interface and returns the response.
@@ -76,7 +83,7 @@ def query_gpt(formatted_experiences, user_query):
         return gpt_response
     except Exception as e:
         print(f"An error occurred: {e}")
-        return None
+        return  {"error": "Failed to get a response from GPT", "details": str(e)}
 
 
 
