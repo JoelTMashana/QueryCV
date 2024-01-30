@@ -7,7 +7,7 @@ from routes.experiences import (link_tools_to_experience,
                                 link_skills_to_experience, 
                                 update_user_experience, 
                                 delete_user_experience)
-from routes.tools_and_skills import  create_tool, create_skill
+from routes.tools_and_skills import  create_tool, create_skill, get_all_tools, get_all_skills
 
 
 client = TestClient(app)
@@ -161,3 +161,30 @@ def test_delete_experience(test_db_session, test_user, experience_with_skills):
     assert not test_db_session.query(Experience).filter(Experience.experience_id == experience_with_skills).first()
     assert not test_db_session.query(ExperienceSkillLink).filter(ExperienceSkillLink.experience_id == experience_with_skills).all()
     assert not test_db_session.query(ExperienceToolLink).filter(ExperienceToolLink.experience_id == experience_with_skills).all()
+
+
+def test_get_all_tools(test_db_session):
+    tool1 = Tool(tool_name="Tool 1")
+    tool2 = Tool(tool_name="Tool 2")
+    test_db_session.add(tool1)
+    test_db_session.add(tool2)
+    test_db_session.commit()
+
+    tools = get_all_tools(db=test_db_session)
+
+    assert len(tools) == 2
+    assert tools[0].tool_name == "Tool 1"
+    assert tools[1].tool_name == "Tool 2"
+
+def test_get_all_skills(test_db_session):
+    skill1 = Skill(skill_name="Skill 1")
+    skill2 = Skill(skill_name="Skill 2")
+    test_db_session.add(skill1)
+    test_db_session.add(skill2)
+    test_db_session.commit()
+
+    skills = get_all_skills(db=test_db_session)
+
+    assert len(skills) == 2
+    assert skills[0].skill_name == "Skill 1"
+    assert skills[1].skill_name == "Skill 2"
