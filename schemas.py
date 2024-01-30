@@ -67,6 +67,9 @@ class ExperienceRead(ExperienceBase):
     class Config:
         orm_mode = True
 
+class ExperienceReturn(BaseModel):
+    experience_id: int
+
 
 class ExperienceUpdate(BaseModel):
     position: Optional[str]= None

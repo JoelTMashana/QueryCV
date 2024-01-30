@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink, UserToolLink
-from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate, UserQueryPreRegistration
+from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate, UserQueryPreRegistration, ExperienceReturn
 from helpers import check_user_exits
 from services import  (get_skills_related_to_experience, 
                        get_tools_related_to_experience, 
@@ -74,8 +74,11 @@ def query_user_pre_registration_experiences(user_query: UserQueryPreRegistration
 
 
 
-@router.post("/api/v1/users/{user_id}/experiences", response_model=ExperienceRead)
-def create_experience_for_user(user_id: int, experience: ExperienceCreate, db: Session = Depends(get_db)):
+@router.post("/api/v1/users/{user_id}/experiences", response_model=ExperienceReturn)
+def create_experience_for_user(user_id: int, 
+                               experience: ExperienceCreate, 
+                               db: Session = Depends(get_db), 
+                               current_user: UserAuth = Depends(get_current_user)):
     db_user = db.query(User).filter(User.user_id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -86,7 +89,8 @@ def create_experience_for_user(user_id: int, experience: ExperienceCreate, db: S
     db.commit()
     db.refresh(db_experience)
 
-    return db_experience
+    return {"experience_id": db_experience.experience_id}
+ 
 
 
 
