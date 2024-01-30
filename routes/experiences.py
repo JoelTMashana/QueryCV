@@ -86,7 +86,7 @@ def create_experience_for_user(user_id: int, experience: ExperienceCreate, db: S
     db.commit()
     db.refresh(db_experience)
 
-    return db_experience
+    return db_experience.experience_id # new
 
 
 

@@ -49,7 +49,8 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
             "user_details": {
                 "firstname": db_user.firstname,
                 "lastname": db_user.lastname,
-                "email": db_user.email
+                "email": db_user.email,
+                "user_id": db_user.user_id # new
             }
         }
     except SQLAlchemyError as e:
@@ -95,7 +96,8 @@ def login(user_credentials: UserLogin, response: Response, db: Session):
         "user": {
             "firstname": user.firstname,
             "lastname": user.lastname,
-            "email": user.email
+            "email": user.email,
+            "user_id": user.user_id # new
         }
     }
 
