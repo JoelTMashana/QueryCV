@@ -30,6 +30,7 @@ from services import  (
     aggregate_user_item_ids_across_all_experiences,
     get_formated_work_experience
     )
+from servicestwo.experience_service import ExperienceService
 from security import get_current_user 
 from schemas import UserAuth
 
@@ -46,8 +47,10 @@ def post_user_query(
     check_user_exits(user_id, db)
     if not query.query: 
         return {'response': 'User did not enter a query'}
-    
-    formatted_experiences = get_formated_work_experience(user_id, db)
+     
+    experience_service = ExperienceService(db)
+
+    formatted_experiences = experience_service.get_formatted_work_experience(user_id)
 
     gpt_response = query_gpt(formatted_experiences, query.query)
     return {"gpt_response": gpt_response}
