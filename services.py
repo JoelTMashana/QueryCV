@@ -10,6 +10,8 @@ from typing import List
 from sqlalchemy.exc import SQLAlchemyError
 from models import Skill, Tool, UserSkillLink, UserToolLink
 from database import get_db
+import logging
+
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -68,8 +70,11 @@ def get_formated_work_experience(
     ):
 
     if user_id in experience_cache:
+        logging.info(f'Cache hit for user_id: {user_id}')
         return experience_cache[user_id]
     
+    logging.info(f'Cache miss for user_id: {user_id}')
+    logging.info(f'Cache after miss: {experience_cache}')
     work_experience_full_details = []
     work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
 
@@ -94,6 +99,7 @@ def get_formated_work_experience(
     print(formatted_experiences) 
 
     experience_cache[user_id] = work_experience_full_details  
+    logging.info(f'Cache: {experience_cache}')
     
     return formatted_experiences
 
