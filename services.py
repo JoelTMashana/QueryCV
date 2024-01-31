@@ -2,14 +2,14 @@
 import openai
 import os
 from dotenv import load_dotenv
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink, Experience
-from schemas import SkillRead, ToolRead
+from schemas import SkillRead, ToolRead, ExperienceRead
 from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy.exc import SQLAlchemyError
 from models import Skill, Tool, UserSkillLink, UserToolLink
-
+from database import get_db
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -61,14 +61,53 @@ def format_pre_registration_experiences_for_gpt(experiences: List[Experience]) -
         formatted += f"Position: {experience.position}, Company: {experience.company}, Description: {experience.description}\n"
     return formatted
 
+experience_cache = {}
+def get_formated_work_experience(
+    user_id: int, 
+    db: Session = Depends(get_db),
+    ):
+
+    if user_id in experience_cache:
+        return experience_cache[user_id]
+    
+    work_experience_full_details = []
+    work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
+
+    for experience in work_experience:
+        skill_models = get_skills_related_to_experience(experience.experience_id, db)
+
+        tool_models = get_tools_related_to_experience(experience.experience_id, db)
+
+        experience_detail = ExperienceRead(
+            experience_id=experience.experience_id,
+            position=experience.position,
+            company=experience.company,
+            industry=experience.industry,
+            duration=experience.duration,
+            description=experience.description,
+            outcomes=experience.outcomes,
+            skills=skill_models,
+            tools=tool_models
+        )
+        work_experience_full_details.append(experience_detail)
+    formatted_experiences = format_experiences_for_gpt(work_experience_full_details)
+    print(formatted_experiences) 
+
+    experience_cache[user_id] = work_experience_full_details  
+    
+    return formatted_experiences
+
 
 def query_gpt(formatted_experiences, user_query):
     """
-    Sends a query to the OpenAI GPT API using the updated interface and returns the response.
+    Sends a query to the OpenAI GPT API and returns the response.
     """
-    prompt = f"""User Work Experience: {formatted_experiences}
-                 User Query: {user_query}
-             """
+    prompt = f"""The following is a user's work experience and a query about it. Provide a detailed response, starting each new paragraph with 'PARAGRAPH:'.
+
+                User Work Experience: {formatted_experiences}
+                User Query: {user_query}
+
+                Response:"""
 
     try:
         response = openai.chat.completions.create(
@@ -83,7 +122,8 @@ def query_gpt(formatted_experiences, user_query):
         return gpt_response
     except Exception as e:
         print(f"An error occurred: {e}")
-        return  {"error": "Failed to get a response from GPT", "details": str(e)}
+        return {"error": "Failed to get a response from GPT", "details": str(e)}
+
 
 
 
