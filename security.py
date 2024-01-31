@@ -9,7 +9,7 @@ from  schemas import UserAuth
 from sqlalchemy.orm import Session
 from models import User
 from database import get_db
-
+import logging
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -39,14 +39,18 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     token = request.cookies.get("access_token")
+    if not token:
+        logging('No acces token found')
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
+            logging('User Id no found, credentials exception raised')
             raise credentials_exception
 
         user = db.query(User).filter(User.user_id == user_id).first()
         if user is None:
+            logging('User id not found in db. Credentials exception raised')
             raise credentials_exception
         return UserAuth(
                 user_id=user.user_id,
