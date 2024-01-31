@@ -2,88 +2,38 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Experience, User, ExperienceSkillLink, Skill, Tool, ExperienceToolLink,  UserSkillLink, UserToolLink
-from schemas import ExperienceRead, ExperienceCreate, SkillLink, ToolLink, ExperienceUpdate, UserQueryPreRegistration, ExperienceReturn, UserQuery
+from models import (
+    Experience, 
+    User, 
+    ExperienceSkillLink, 
+    Skill, 
+    Tool, 
+    ExperienceToolLink,  
+    UserSkillLink, 
+    UserToolLink
+    )
+from schemas import  (
+    ExperienceCreate, 
+    SkillLink, 
+    ToolLink, 
+    ExperienceUpdate, 
+    UserQueryPreRegistration, 
+    ExperienceReturn, 
+    UserQuery
+    )
 from helpers import check_user_exits
-from services import  (get_skills_related_to_experience, 
-                       get_tools_related_to_experience, 
-                       format_experiences_for_gpt, 
-                       format_pre_registration_experiences_for_gpt,
-                       query_gpt, 
-                       update_user_item_link, 
-                       update_experience_item_link, 
-                       aggregate_user_item_ids_across_all_experiences,
-                       get_formated_work_experience)
+from services import  (
+    format_pre_registration_experiences_for_gpt,
+    query_gpt, 
+    update_user_item_link, 
+    update_experience_item_link, 
+    aggregate_user_item_ids_across_all_experiences,
+    get_formated_work_experience
+    )
 from security import get_current_user 
 from schemas import UserAuth
 
 router = APIRouter()
-
-# @router.get("/api/v1/users/{user_id}/experiences")
-# def get_user_experiences(
-#     user_id: int, 
-#     user_query: str = Query(None), 
-#     db: Session = Depends(get_db),
-#     current_user: UserAuth = Depends(get_current_user) # Must add to rest to place behind auth wall 
-#     ):
-
-#     check_user_exits(user_id, db)
-#     work_experience_full_details = []
-#     work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
-
-#     for experience in work_experience:
-#         skill_models = get_skills_related_to_experience(experience.experience_id, db)
-
-#         tool_models = get_tools_related_to_experience(experience.experience_id, db)
-
-#         experience_detail = ExperienceRead(
-#             experience_id=experience.experience_id,
-#             position=experience.position,
-#             company=experience.company,
-#             industry=experience.industry,
-#             duration=experience.duration,
-#             description=experience.description,
-#             outcomes=experience.outcomes,
-#             skills=skill_models,
-#             tools=tool_models
-#         )
-#         work_experience_full_details.append(experience_detail)
-#     formatted_experiences = format_experiences_for_gpt(work_experience_full_details)
-#     print(formatted_experiences)
-#     if not user_query:
-#         return {'response': 'User did not enter a query'}
-#     gpt_response = query_gpt(formatted_experiences, user_query)
-#     return {"gpt_response": gpt_response}
-
-# def get_formated_work_experience(
-#     user_id: int, 
-#     db: Session = Depends(get_db),
-#     ):
-
-#     work_experience_full_details = []
-#     work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
-
-#     for experience in work_experience:
-#         skill_models = get_skills_related_to_experience(experience.experience_id, db)
-
-#         tool_models = get_tools_related_to_experience(experience.experience_id, db)
-
-#         experience_detail = ExperienceRead(
-#             experience_id=experience.experience_id,
-#             position=experience.position,
-#             company=experience.company,
-#             industry=experience.industry,
-#             duration=experience.duration,
-#             description=experience.description,
-#             outcomes=experience.outcomes,
-#             skills=skill_models,
-#             tools=tool_models
-#         )
-#         work_experience_full_details.append(experience_detail)
-#     formatted_experiences = format_experiences_for_gpt(work_experience_full_details)
-#     print(formatted_experiences)   
-#     return formatted_experiences
-
 
 @router.post("/api/v1/users/{user_id}/experiences/query")
 def post_user_query(
