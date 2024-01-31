@@ -94,11 +94,14 @@ def get_formated_work_experience(
 
 def query_gpt(formatted_experiences, user_query):
     """
-    Sends a query to the OpenAI GPT API using the updated interface and returns the response.
+    Sends a query to the OpenAI GPT API and returns the response.
     """
-    prompt = f"""User Work Experience: {formatted_experiences}
-                 User Query: {user_query}
-             """
+    prompt = f"""The following is a user's work experience and a query about it. Provide a detailed response, starting each new paragraph with 'PARAGRAPH:'.
+
+                User Work Experience: {formatted_experiences}
+                User Query: {user_query}
+
+                Response:"""
 
     try:
         response = openai.chat.completions.create(
@@ -113,7 +116,8 @@ def query_gpt(formatted_experiences, user_query):
         return gpt_response
     except Exception as e:
         print(f"An error occurred: {e}")
-        return  {"error": "Failed to get a response from GPT", "details": str(e)}
+        return {"error": "Failed to get a response from GPT", "details": str(e)}
+
 
 
 
