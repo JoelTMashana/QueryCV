@@ -63,18 +63,12 @@ def format_pre_registration_experiences_for_gpt(experiences: List[Experience]) -
         formatted += f"Position: {experience.position}, Company: {experience.company}, Description: {experience.description}\n"
     return formatted
 
-experience_cache = {}
+
 def get_formated_work_experience(
     user_id: int, 
     db: Session = Depends(get_db),
     ):
 
-    if user_id in experience_cache:
-        logging.info(f'Cache hit for user_id: {user_id}')
-        return experience_cache[user_id]
-    
-    logging.info(f'Cache miss for user_id: {user_id}')
-    logging.info(f'Cache after miss: {experience_cache}')
     work_experience_full_details = []
     work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
 
@@ -97,9 +91,6 @@ def get_formated_work_experience(
         work_experience_full_details.append(experience_detail)
     formatted_experiences = format_experiences_for_gpt(work_experience_full_details)
     print(formatted_experiences) 
-
-    experience_cache[user_id] = work_experience_full_details  
-    logging.info(f'Cache: {experience_cache}')
     
     return formatted_experiences
 
