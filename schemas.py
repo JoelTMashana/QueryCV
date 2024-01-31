@@ -107,3 +107,7 @@ class PreRegistrationExperience(BaseModel):
 class UserQueryPreRegistration(BaseModel):
     query: str
     experiences: List[PreRegistrationExperience]
+
+
+class UserQuery(BaseModel):
+    query: str

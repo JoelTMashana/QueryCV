@@ -2,14 +2,14 @@
 import openai
 import os
 from dotenv import load_dotenv
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from models import Skill, Tool, ExperienceSkillLink, ExperienceToolLink, Experience
-from schemas import SkillRead, ToolRead
+from schemas import SkillRead, ToolRead, ExperienceRead
 from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy.exc import SQLAlchemyError
 from models import Skill, Tool, UserSkillLink, UserToolLink
-
+from database import get_db
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -60,6 +60,36 @@ def format_pre_registration_experiences_for_gpt(experiences: List[Experience]) -
     for experience in experiences:
         formatted += f"Position: {experience.position}, Company: {experience.company}, Description: {experience.description}\n"
     return formatted
+
+
+def get_formated_work_experience(
+    user_id: int, 
+    db: Session = Depends(get_db),
+    ):
+
+    work_experience_full_details = []
+    work_experience = db.query(Experience).filter(Experience.user_id == user_id).all()
+
+    for experience in work_experience:
+        skill_models = get_skills_related_to_experience(experience.experience_id, db)
+
+        tool_models = get_tools_related_to_experience(experience.experience_id, db)
+
+        experience_detail = ExperienceRead(
+            experience_id=experience.experience_id,
+            position=experience.position,
+            company=experience.company,
+            industry=experience.industry,
+            duration=experience.duration,
+            description=experience.description,
+            outcomes=experience.outcomes,
+            skills=skill_models,
+            tools=tool_models
+        )
+        work_experience_full_details.append(experience_detail)
+    formatted_experiences = format_experiences_for_gpt(work_experience_full_details)
+    print(formatted_experiences)   
+    return formatted_experiences
 
 
 def query_gpt(formatted_experiences, user_query):
