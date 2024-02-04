@@ -71,6 +71,35 @@ def get_user_experiences(
         work_experience_full_details.append(experience_detail)
     return work_experience_full_details
 
+@router.get("/api/v1/experiences/{experience_id}", response_model=ExperienceRead)
+def get_experience(
+    experience_id: int, 
+    db: Session = Depends(get_db),
+    current_user: UserAuth = Depends(get_current_user)
+):
+    experience = db.query(Experience).filter(Experience.experience_id == experience_id).first()
+    
+    if not experience or experience.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Experience not found or not accessible")
+
+    skill_models = get_skills_related_to_experience(experience.experience_id, db)
+    tool_models = get_tools_related_to_experience(experience.experience_id, db)
+
+    experience_detail = ExperienceRead(
+        experience_id=experience.experience_id,
+        position=experience.position,
+        company=experience.company,
+        industry=experience.industry,
+        duration=experience.duration,
+        description=experience.description,
+        outcomes=experience.outcomes,
+        skills=skill_models,
+        tools=tool_models
+    )
+
+    return experience_detail
+
+
 
 @router.post("/api/v1/users/{user_id}/experiences/query")
 def post_user_query(
