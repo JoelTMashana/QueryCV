@@ -45,7 +45,7 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
         access_token = create_access_token(data={"sub": str(db_user.user_id)})
 
         # HttpOnly cookie
-        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict')
+        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='None')
 
         return {
             "message": "User registered successfully.",
