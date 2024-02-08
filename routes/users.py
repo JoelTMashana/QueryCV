@@ -45,7 +45,7 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
         access_token = create_access_token(data={"sub": str(db_user.user_id)})
 
         # HttpOnly cookie
-        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='None')
+        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='None', secure=True)
 
         return {
             "message": "User registered successfully.",
@@ -69,7 +69,7 @@ def create_temporary_token_for_onboarding_user(response: Response):
 
         access_token = create_access_token(data={"sub": anonymous_user_id})
 
-        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict', max_age=1800)  
+        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='None', secure=True, max_age=1800)
 
         return {"message": "Temporary session initialised."}
     except Exception as e:
@@ -93,7 +93,7 @@ def login(user_credentials: UserLogin, response: Response, db: Session):
         )
 
     access_token = create_access_token(data={"sub": str(user.user_id)})
-    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Strict')
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='None', secure=True)
 
     return {
         "message": "User logged in successfully.",
