@@ -93,7 +93,7 @@ def login(user_credentials: UserLogin, response: Response, db: Session):
         )
 
     access_token = create_access_token(data={"sub": str(user.user_id)})
-    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='None', secure=True)
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Lax')
 
     return {
         "message": "User logged in successfully.",
