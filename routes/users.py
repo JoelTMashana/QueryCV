@@ -8,6 +8,7 @@ from schemas import UserRead, UserCreate, UserBase, UserLogin, UserSkills, UserT
 from passlib.context import CryptContext
 from security import verify_password, create_access_token
 import uuid
+import logging
 
 
 router = APIRouter()
@@ -23,9 +24,11 @@ async def read_users(db: Session = Depends(get_db)):
 
 @router.post("/api/v1/users/register_user")
 def create_user(user: UserCreate,  response: Response, db: Session = Depends(get_db)):
+    logging.info("Received user registration request")
     try:
         db_user = db.query(User).filter(User.email == user.email).first()
         if db_user:
+            logging.warning("Email already exists: %s", user.email)
             raise HTTPException(status_code=400, detail="Email already exists.")
 
         hashed_password = pwd_context.hash(user.password)
@@ -54,6 +57,7 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
             }
         }
     except SQLAlchemyError as e:
+        logging.error("Database error: %s", str(e))
         db.rollback()
         raise HTTPException(status_code=500, detail="Database error")
 
