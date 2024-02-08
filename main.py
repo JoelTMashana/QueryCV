@@ -12,6 +12,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost:3000",
+    "https://query-cv.vercel.app/"
 ]
 
 app.add_middleware(
