@@ -32,15 +32,12 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-def get_current_user(request: Request, db: Session = Depends(get_db)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    token = request.cookies.get("access_token")
-    if not token:
-        logging('No acces token found')
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
@@ -52,6 +49,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         if user is None:
             logging('User id not found in db. Credentials exception raised')
             raise credentials_exception
+        
         return UserAuth(
                 user_id=user.user_id,
                 firstname=user.firstname,
@@ -60,5 +58,4 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         )
     except JWTError:
         raise credentials_exception
-
 
