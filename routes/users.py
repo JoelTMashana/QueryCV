@@ -23,12 +23,10 @@ async def read_users(db: Session = Depends(get_db)):
 
 
 @router.post("/api/v1/users/register_user")
-def create_user(user: UserCreate,  response: Response, db: Session = Depends(get_db)):
-    logging.info("Received user registration request")
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
     try:
         db_user = db.query(User).filter(User.email == user.email).first()
         if db_user:
-            logging.warning("Email already exists: %s", user.email)
             raise HTTPException(status_code=400, detail="Email already exists.")
 
         hashed_password = pwd_context.hash(user.password)
@@ -38,51 +36,50 @@ def create_user(user: UserCreate,  response: Response, db: Session = Depends(get
             email=user.email,
             hashed_password=hashed_password
         )
+
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
 
         access_token = create_access_token(data={"sub": str(db_user.user_id)})
 
-        # HttpOnly cookie
-        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='None', secure=True)
-
         return {
+            "access_token": access_token,
+            "token_type": "bearer",
             "message": "User registered successfully.",
             "user_details": {
                 "firstname": db_user.firstname,
                 "lastname": db_user.lastname,
                 "email": db_user.email,
-                "user_id": db_user.user_id # new
+                "user_id": db_user.user_id
             }
         }
-    except SQLAlchemyError as e:
-        logging.error("Database error: %s", str(e))
-        db.rollback()
-        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/api/v1/users/temporary-token")
-def create_temporary_token_for_onboarding_user(response: Response):
+def create_temporary_token_for_onboarding_user():
     try:
         anonymous_user_id = str(uuid.uuid4())
 
         access_token = create_access_token(data={"sub": anonymous_user_id})
 
-        response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='None', secure=True, max_age=1800)
-
-        return {"message": "Temporary session initialised."}
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "message": "Temporary session initialised.",
+            "expires_in": 1800
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/api/v1/login")
-def login_route(user_credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
-    return login(user_credentials, response, db)
+def login_route(user_credentials: UserLogin, db: Session = Depends(get_db)):
+    return login(user_credentials, db)
 
-
-
-def login(user_credentials: UserLogin, response: Response, db: Session):
+def login(user_credentials: UserLogin, db: Session):
     user = db.query(User).filter(User.email == user_credentials.email).first()
 
     if not user or not verify_password(user_credentials.password, user.hashed_password):
@@ -93,15 +90,16 @@ def login(user_credentials: UserLogin, response: Response, db: Session):
         )
 
     access_token = create_access_token(data={"sub": str(user.user_id)})
-    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite='Lax')
 
     return {
+        "access_token": access_token,
+        "token_type": "bearer",
         "message": "User logged in successfully.",
         "user": {
             "firstname": user.firstname,
             "lastname": user.lastname,
             "email": user.email,
-            "user_id": user.user_id # new
+            "user_id": user.user_id  
         }
     }
 
